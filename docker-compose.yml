@@ -1,0 +1,7 @@
+services:
+  mycelium:
+    image: josiahdc/mycelium:0.1
+    build:
+      context: .
+    env_file:
+      - mycelium.env
