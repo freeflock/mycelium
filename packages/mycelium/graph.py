@@ -28,8 +28,7 @@ async def fuse_regions(graph, source_id, target_id):
         """
         MATCH (source), (target)
         WHERE elementId(source) = $source_id AND elementId(target) = $target_id
-        CREATE (source)-[:FUSED]->(fusion:Fusion)
-        CREATE (target)-[:FUSED]->(fusion)
+        CREATE (source)-[:FUSED]->(target)
         """,
         source_id=source_id,
         target_id=target_id)
@@ -164,9 +163,9 @@ async def query_nutrients(graph):
 async def query_fusion(graph, source_id):
     response = await graph.execute_query(
         """
-        MATCH (source)-[:FUSED]->(fusion:Fusion)
+        MATCH (source)-[:FUSED]-(target)
         WHERE elementId(source) = $source_id
-        return elementId(fusion)
+        return elementId(target)
         """,
         source_id=source_id)
     if len(response.records) == 0:
