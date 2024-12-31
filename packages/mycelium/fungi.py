@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import TaskGroup
 from random import choice
 
 from neo4j import AsyncGraphDatabase
@@ -24,15 +25,20 @@ class Fungi:
         await hypha.async_init()
         self.hyphae.append(hypha)
 
+    async def create_initial_hypha(self):
+        nutrients = await query_nutrients(self.graph)
+        nutrient_id = choice(list(nutrients.keys()))
+        spores = await query_spores(self.graph)
+        existing_queries = list(spores.values())
+        query = await generate_search_query(nutrients.get(nutrient_id), existing_queries)
+        spore_id = await create_spore(self.graph, query, self.fungi_id)
+        await self.produce_hypha(spore_id)
+
     async def produce_hyphae(self):
-        while len(self.hyphae) < self.min_hyphal_count:
-            nutrients = await query_nutrients(self.graph)
-            nutrient_id = choice(list(nutrients.keys()))
-            spores = await query_spores(self.graph)
-            existing_queries = list(spores.values())
-            query = await generate_search_query(nutrients.get(nutrient_id), existing_queries)
-            spore_id = await create_spore(self.graph, query, self.fungi_id)
-            await self.produce_hypha(spore_id)
+        hypha_to_create = self.min_hyphal_count - len(self.hyphae)
+        async with TaskGroup() as task_group:
+            for i in range(hypha_to_create):
+                task_group.create_task(self.create_initial_hypha())
 
     async def sprout_spores(self):
         spores = await query_spores(self.graph)

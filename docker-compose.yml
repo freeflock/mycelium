@@ -1,7 +1,25 @@
 services:
-  mycelium:
-    image: josiahdc/mycelium:0.1
-    build:
-      context: .
-    env_file:
-      - mycelium.env
+  neo4j:
+    image: neo4j:5.26.0-community-bullseye
+    volumes:
+      - mycelium-neo4j-config:/config
+      - mycelium-neo4j-logs:/logs
+      - mycelium-neo4j-data:/data
+      - mycelium-neo4j-plugins:/plugins
+    environment:
+      - NEO4J_AUTH_FILE=/run/secrets/neo4j_auth_file
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    secrets:
+      - neo4j_auth_file
+
+secrets:
+  neo4j_auth_file:
+    file: secrets/neo4j_auth.txt
+
+volumes:
+  mycelium-neo4j-config:
+  mycelium-neo4j-logs:
+  mycelium-neo4j-data:
+  mycelium-neo4j-plugins:

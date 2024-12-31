@@ -15,7 +15,7 @@ logger.info(f"NEO4J_USERNAME: {NEO4J_USERNAME}")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 logger.info(f"NEO4J_PASSWORD: xxx")
 
-MIN_HYPHAL_COUNT = 5
+MIN_HYPHAL_COUNT = 3
 
 
 async def main():
