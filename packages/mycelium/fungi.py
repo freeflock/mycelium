@@ -1,36 +1,35 @@
 import asyncio
 from asyncio import TaskGroup
-from random import choice
 
 from neo4j import AsyncGraphDatabase
 
-from mycelium.graph import query_nutrients, query_spores, create_spore, create_fungi
+from mycelium.graph import query_spores, create_spore, create_fungi, query_nutrient_topic
 from mycelium.hypha import Hypha
 from mycelium.inference import generate_search_query
 
 
 class Fungi:
-    def __init__(self, graph: AsyncGraphDatabase.driver, min_hyphal_count: int):
+    def __init__(self, graph: AsyncGraphDatabase.driver, primary_nutrient_id: str, min_hyphal_count: int):
         self.min_hyphal_count = min_hyphal_count
         self.hyphae = []
         self.graph = graph
         self.fungi_id = None
+        self.primary_nutrient_id = primary_nutrient_id
 
     async def async_init(self):
         self.fungi_id = await create_fungi(self.graph)
         await self.produce_hyphae()
 
     async def produce_hypha(self, spore_id):
-        hypha = Hypha(self.graph, spore_id)
+        hypha = Hypha(self.graph, self.fungi_id, spore_id)
         await hypha.async_init()
         self.hyphae.append(hypha)
 
     async def create_initial_hypha(self):
-        nutrients = await query_nutrients(self.graph)
-        nutrient_id = choice(list(nutrients.keys()))
-        spores = await query_spores(self.graph)
+        spores = await query_spores(self.graph, self.fungi_id)
         existing_queries = list(spores.values())
-        query = await generate_search_query(nutrients.get(nutrient_id), existing_queries)
+        topic = await query_nutrient_topic(self.graph, self.primary_nutrient_id)
+        query = await generate_search_query(topic, existing_queries)
         spore_id = await create_spore(self.graph, query, self.fungi_id)
         await self.produce_hypha(spore_id)
 
@@ -41,7 +40,7 @@ class Fungi:
                 task_group.create_task(self.create_initial_hypha())
 
     async def sprout_spores(self):
-        spores = await query_spores(self.graph)
+        spores = await query_spores(self.graph, self.fungi_id)
         hyphal_queries = [hypha.query for hypha in self.hyphae]
         cleaned_spores = {spore_id: query for spore_id, query in spores.items() if query not in hyphal_queries}
         for spore_id in list(cleaned_spores.keys()):

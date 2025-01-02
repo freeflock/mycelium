@@ -13,8 +13,9 @@ from mycelium.web import search, scrape, trim_url
 
 
 class Hypha:
-    def __init__(self, graph: AsyncGraphDatabase.driver, spore_id: str):
+    def __init__(self, graph: AsyncGraphDatabase.driver, fungi_id: str, spore_id: str):
         self.graph = graph
+        self.fungi_id = fungi_id
         self.spore_id = spore_id
         self.finished = False
         self.query = None
@@ -46,24 +47,26 @@ class Hypha:
 
             await create_site(self.graph, region_id, url, web_content)
             nutrients = await query_nutrients(self.graph)
+            any_relevance = False
             for nutrient_id, topic in nutrients.items():
                 relevant = await determine_relevance(topic, web_content)
                 if relevant:
-                    logger.info(f"found relevant content at {url}")
+                    any_relevance = True
+                    logger.info(f"found relevant content for {topic} at {url}")
                     await connect_region_to_nutrient(self.graph, region_id, nutrient_id)
                     relevant_urls = await extract_relevant_urls(self.query, web_content)
                     for relevant_url in set(relevant_urls):
                         await self.create_or_fuse_region(relevant_url, region_id)
                     digest = await generate_digest(topic, web_content)
-                    await create_digest(self.graph, region_id, digest)
+                    await create_digest(self.graph, region_id, digest, nutrient_id)
                     if await query_fusion(self.graph, region_id):
-                        spores = await query_spores(self.graph)
+                        spores = await query_spores(self.graph, self.fungi_id)
                         existing_search_queries = list(spores.values())
                         spore_query = await generate_spore(topic, existing_search_queries, digest)
                         await create_spore(self.graph, spore_query, region_id)
-                else:
-                    logger.info(f"no relevant content at {url}")
-                    await terminate_region(self.graph, region_id)
+            if not any_relevance:
+                logger.info(f"no relevant content at {url}")
+                await terminate_region(self.graph, region_id)
         except KeyboardInterrupt:
             raise
         except Exception as error:

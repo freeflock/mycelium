@@ -1,12 +1,14 @@
 import asyncio
 import os
 import traceback
+from asyncio import TaskGroup
 from time import sleep
 
 from loguru import logger
 from neo4j import AsyncGraphDatabase
 
 from mycelium.fungi import Fungi
+from mycelium.graph import query_nutrients
 
 NEO4J_URI = os.getenv("NEO4J_URI")
 logger.info(f"NEO4J_URI: {NEO4J_URI}")
@@ -22,10 +24,18 @@ async def main():
     while True:
         try:
             async with AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
-                fungi = Fungi(graph, MIN_HYPHAL_COUNT)
-                await fungi.async_init()
+                nutrients = await query_nutrients(graph)
+                fungi = []
+                for nutrient_id in nutrients.keys():
+                    fungus = Fungi(graph, nutrient_id, MIN_HYPHAL_COUNT)
+                    fungi.append(fungus)
+                async with TaskGroup() as task_group:
+                    for fungus in fungi:
+                        task_group.create_task(fungus.async_init())
                 while True:
-                    await fungi.grow()
+                    async with TaskGroup() as task_group:
+                        for fungus in fungi:
+                            task_group.create_task(fungus.grow())
         except KeyboardInterrupt:
             raise
         except Exception as error:

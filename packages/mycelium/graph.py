@@ -34,15 +34,18 @@ async def fuse_regions(graph, source_id, target_id):
         target_id=target_id)
 
 
-async def create_digest(graph, source_id, digest_content):
+async def create_digest(graph, source_id, digest_content, nutrient_id):
     await graph.execute_query(
         """
         MATCH (source)
         WHERE elementId(source) = $source_id
-        CREATE (source)-[:DESCRIBED_BY]->(digest:Digest {content: $content})
+        MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = $nutrient_id
+        CREATE (source)-[:DESCRIBED_BY]->(digest:Digest {content: $content})-[:DIGESTS]->(nutrient)
         """,
         source_id=source_id,
-        content=digest_content)
+        content=digest_content,
+        nutrient_id=nutrient_id)
 
 
 async def create_region(graph, url, source_id):
@@ -129,12 +132,14 @@ async def query_spore(graph, spore_id):
     return response.records[0][0]
 
 
-async def query_spores(graph):
+async def query_spores(graph, fungi_id):
     response = await graph.execute_query(
         """
-        MATCH (spore:Spore)
+        MATCH (fungi:Fungi)-[:SPREADS|SPORED*]->(spore:Spore)
+        WHERE elementId(fungi) = $fungi_id
         RETURN elementId(spore), spore.query
-        """)
+        """,
+        fungi_id=fungi_id)
     return {record[0]: record[1] for record in response.records}
 
 
@@ -158,6 +163,17 @@ async def query_nutrients(graph):
         RETURN elementId(nutrient), nutrient.topic
         """)
     return {record[0]: record[1] for record in response.records}
+
+
+async def query_nutrient_topic(graph, nutrient_id):
+    response = await graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = $nutrient_id
+        RETURN nutrient.topic
+        """,
+        nutrient_id=nutrient_id)
+    return response.records[0][0]
 
 
 async def query_fusion(graph, source_id):
