@@ -47,12 +47,17 @@ class Fungi:
             await self.produce_hypha(spore_id)
 
     async def prune_hyphae(self):
-        hypha_to_remove = []
-        for index, hypha in enumerate(self.hyphae):
-            if hypha.finished:
-                hypha_to_remove.append(index)
-        for index in hypha_to_remove:
-            self.hyphae.pop(index)
+        prune_complete = False
+        while not prune_complete:
+            hypha_to_pop = None
+            for index, hypha in enumerate(self.hyphae):
+                if hypha.finished:
+                    hypha_to_pop = index
+                    break
+            if hypha_to_pop is None:
+                prune_complete = True
+            else:
+                self.hyphae.pop(hypha_to_pop)
 
     async def grow(self):
         await self.sprout_spores()
