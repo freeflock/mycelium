@@ -3,7 +3,7 @@ from asyncio import TaskGroup
 
 from neo4j import AsyncGraphDatabase
 
-from mycelium.graph import query_spores, create_spore, create_fungi, query_nutrient_topic
+from mycelium.graph import query_spores, create_spore, create_fungi, query_nutrient_topic, query_nutrient_context
 from mycelium.hypha import Hypha
 from mycelium.inference import generate_search_query
 
@@ -29,7 +29,9 @@ class Fungi:
         spores = await query_spores(self.graph, self.fungi_id)
         existing_queries = list(spores.values())
         topic = await query_nutrient_topic(self.graph, self.primary_nutrient_id)
-        query = await generate_search_query(topic, existing_queries)
+        context_entries = await query_nutrient_context(self.graph, self.primary_nutrient_id)
+        context = "\n\n".join(context_entries)
+        query = await generate_search_query(topic, existing_queries, context)
         spore_id = await create_spore(self.graph, query, self.fungi_id)
         await self.produce_hypha(spore_id)
 

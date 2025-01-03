@@ -12,10 +12,11 @@ async def collate_reports(research_topic, digests):
     return output.content
 
 
-async def generate_search_query(research_topic, existing_queries):
+async def generate_search_query(research_topic, existing_queries, context):
     prompt = hub.pull("vagabond/mycelium_search_query_generator")
     chain = prompt | gpt_o1
-    output = await chain.ainvoke({"research_topic": research_topic, "search_queries": existing_queries})
+    output = await chain.ainvoke(
+        {"research_topic": research_topic, "search_queries": existing_queries, "context": context})
     return output.content
 
 
@@ -40,8 +41,9 @@ async def generate_digest(research_topic, web_content):
     return output.content
 
 
-async def generate_spore(research_topic, search_queries, digest):
+async def generate_spore(research_topic, search_queries, digest, context):
     prompt = hub.pull("vagabond/mycelium_spore")
     chain = prompt | gpt_o1
-    output = await chain.ainvoke({"research_topic": research_topic, "search_queries": search_queries, "digest": digest})
+    output = await chain.ainvoke(
+        {"research_topic": research_topic, "search_queries": search_queries, "digest": digest, "context": context})
     return output.content

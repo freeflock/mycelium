@@ -7,7 +7,7 @@ from mycelium.graph import (create_spore, create_region, query_region_id, create
                             query_nutrients, connect_region_to_nutrient, query_unexplored_region, fuse_regions,
                             terminate_region,
                             create_digest, \
-                            query_spores, query_spore, query_fusion)
+                            query_spores, query_spore, query_fusion, query_nutrient_context)
 from mycelium.inference import extract_relevant_urls, determine_relevance, generate_digest, generate_spore
 from mycelium.web import search, scrape, trim_url
 
@@ -62,7 +62,9 @@ class Hypha:
                     if await query_fusion(self.graph, region_id):
                         spores = await query_spores(self.graph, self.fungi_id)
                         existing_search_queries = list(spores.values())
-                        spore_query = await generate_spore(topic, existing_search_queries, digest)
+                        context_entries = await query_nutrient_context(self.graph, nutrient_id)
+                        context = "\n\n".join(context_entries)
+                        spore_query = await generate_spore(topic, existing_search_queries, digest, context)
                         await create_spore(self.graph, spore_query, region_id)
             if not any_relevance:
                 logger.info(f"no relevant content at {url}")

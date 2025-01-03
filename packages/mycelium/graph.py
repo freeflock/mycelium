@@ -165,6 +165,17 @@ async def query_nutrients(graph):
     return {record[0]: record[1] for record in response.records}
 
 
+async def query_nutrient_context(graph, nutrient_id):
+    response = await graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)-[:DESCRIBED_BY]->(context:Context)
+        WHERE elementId(nutrient) = $nutrient_id
+        RETURN context.content
+        """,
+        nutrient_id=nutrient_id)
+    return [record[0] for record in response.records]
+
+
 async def query_nutrient_topic(graph, nutrient_id):
     response = await graph.execute_query(
         """
