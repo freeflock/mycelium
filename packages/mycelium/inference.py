@@ -1,20 +1,20 @@
 from langchain import hub
 from langchain_openai import ChatOpenAI
 
-gpt_01 = ChatOpenAI(model="o1-preview", temperature=1)
+gpt_o1 = ChatOpenAI(model="o1-preview", temperature=1)
 gpt_4o = ChatOpenAI(model="gpt-4o")
 
 
 async def collate_reports(research_topic, digests):
     prompt = hub.pull("vagabond/mycelium_collation")
-    chain = prompt | gpt_01
+    chain = prompt | gpt_o1
     output = await chain.ainvoke({"research_topic": research_topic, "reports": digests})
     return output.content
 
 
 async def generate_search_query(research_topic, existing_queries):
     prompt = hub.pull("vagabond/mycelium_search_query_generator")
-    chain = prompt | gpt_01
+    chain = prompt | gpt_o1
     output = await chain.ainvoke({"research_topic": research_topic, "search_queries": existing_queries})
     return output.content
 
@@ -42,6 +42,6 @@ async def generate_digest(research_topic, web_content):
 
 async def generate_spore(research_topic, search_queries, digest):
     prompt = hub.pull("vagabond/mycelium_spore")
-    chain = prompt | gpt_01
+    chain = prompt | gpt_o1
     output = await chain.ainvoke({"research_topic": research_topic, "search_queries": search_queries, "digest": digest})
     return output.content
