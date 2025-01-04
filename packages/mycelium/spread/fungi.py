@@ -4,7 +4,7 @@ from asyncio import TaskGroup
 from neo4j import AsyncGraphDatabase
 
 from mycelium.graph import query_spores, create_spore, create_fungi, query_nutrient_topic, query_nutrient_context
-from mycelium.hypha import Hypha
+from mycelium.spread.hypha import Hypha
 from mycelium.inference import generate_search_query
 
 

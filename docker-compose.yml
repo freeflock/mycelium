@@ -1,5 +1,5 @@
 services:
-  neo4j:
+  graph:
     image: neo4j:5.26.0-community-bullseye
     volumes:
       - mycelium-neo4j-config:/config
@@ -13,6 +13,30 @@ services:
       - "7687:7687"
     secrets:
       - neo4j_auth_file
+  spread:
+    image: josiahdc/spread:0.1
+    build:
+      context: .
+      dockerfile: docker/spread/Dockerfile
+    env_file:
+      - secrets/mycelium.env
+    depends_on:
+      - graph
+    deploy:
+      mode: replicated
+      replicas: 3
+  symbiosis:
+    image: josiahdc/symbiosis:0.1
+    ports:
+      - "33933:33333"
+    build:
+      context: .
+      dockerfile: docker/symbiosis/Dockerfile
+    env_file:
+      - secrets/mycelium.env
+    depends_on:
+      - graph
+      - spread
 
 secrets:
   neo4j_auth_file:
