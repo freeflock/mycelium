@@ -17,29 +17,36 @@ logger.info(f"NEO4J_USERNAME: {NEO4J_USERNAME}")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 logger.info(f"NEO4J_PASSWORD: xxx")
 
-MIN_HYPHAL_COUNT = 1
+MIN_HYPHAL_COUNT = 3
+
+async def spread(graph):
+    fungi = []
+    while True:
+        nutrients = await query_nutrients(graph)
+        if len(nutrients) == 0:
+            logger.info("no nutrients found")
+            sleep(3)
+            fungi = []
+        for nutrient_id in nutrients.keys():
+            nutrient_found = False
+            for fungus in fungi:
+                if fungus.primary_nutrient_id == nutrient_id:
+                    nutrient_found = True
+                    break
+            if not nutrient_found:
+                fungus = Fungi(graph, nutrient_id, MIN_HYPHAL_COUNT)
+                await fungus.async_init()
+                fungi.append(fungus)
+        async with TaskGroup() as task_group:
+            for fungus in fungi:
+                task_group.create_task(fungus.grow())
 
 
 async def main():
     while True:
         try:
             async with AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
-                nutrients = await query_nutrients(graph)
-                fungi = []
-                if len(nutrients.keys()) > 0:
-                    for nutrient_id in nutrients.keys():
-                        fungus = Fungi(graph, nutrient_id, MIN_HYPHAL_COUNT)
-                        fungi.append(fungus)
-                    async with TaskGroup() as task_group:
-                        for fungus in fungi:
-                            task_group.create_task(fungus.async_init())
-                    while True:
-                        async with TaskGroup() as task_group:
-                            for fungus in fungi:
-                                task_group.create_task(fungus.grow())
-                else:
-                    logger.info("no nutrients found")
-                    sleep(3)
+                await spread(graph)
         except KeyboardInterrupt:
             raise
         except Exception as error:

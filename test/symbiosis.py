@@ -20,7 +20,7 @@ def test_wrong_api_key():
 def test_provide_nutrient():
     headers = {"x-api-key": SYMBIOSIS_API_KEY}
     payload = {
-        "research_topic": "Wild camping restrictions in Catalonia",
+        "research_topic": "Mycelium sensitivity to light",
         "category": "research",
         "context": ""
     }

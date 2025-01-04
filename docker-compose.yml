@@ -24,7 +24,7 @@ services:
       - graph
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
   symbiosis:
     image: josiahdc/symbiosis:0.1
     ports:
