@@ -1,8 +1,7 @@
 import asyncio
 import os
 import traceback
-from asyncio import TaskGroup
-from time import sleep
+from asyncio import TaskGroup, sleep
 
 from loguru import logger
 from neo4j import AsyncGraphDatabase
@@ -25,7 +24,7 @@ async def spread(graph):
         nutrients = await query_nutrients(graph)
         if len(nutrients) == 0:
             logger.info("no nutrients found")
-            sleep(3)
+            await sleep(3)
             fungi = []
         for nutrient_id in nutrients.keys():
             nutrient_found = False
@@ -51,7 +50,7 @@ async def main():
             raise
         except Exception as error:
             logger.error(f"(!) unhandled exception: {error}\n{traceback.format_exc()}")
-            sleep(3)
+            await sleep(3)
 
 
 if __name__ == '__main__':
