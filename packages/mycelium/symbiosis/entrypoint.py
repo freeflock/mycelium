@@ -76,3 +76,31 @@ async def fruit():
         digests = await query_digests(graph, nutrient_id)
         collation = await collate_reports(topic, digests)
         return {"collation": collation}
+
+
+async def query_all_relationships(graph):
+    response = await graph.execute_query(
+        """
+        MATCH (s)-[r]->(t)
+        RETURN id(s) as source, LABELS(s) as source_labels, id(t) as target, LABELS(t) as target_labels, type(r) as 
+        relationship
+        """)
+    return response.records
+
+
+@app.post("/visualize")
+async def visualize():
+    logger.info(f"visualize called")
+    async with AsyncGraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH) as graph:
+        all_relationships = await query_all_relationships(graph)
+        nodes_with_labels = {}
+        links = []
+        for relationship in all_relationships:
+            nodes_with_labels[relationship["source"]] = relationship["source_labels"][0]
+            nodes_with_labels[relationship["target"]] = relationship["target_labels"][0]
+            links.append({"source": relationship["source"],
+                          "target": relationship["target"],
+                          "name": relationship["relationship"]})
+        nodes = [{"id": node_id, "name": name} for node_id, name in nodes_with_labels.items()]
+        result = {"nodes": nodes, "links": links}
+    return JSONResponse(status_code=200, content={"graph_data": result})
