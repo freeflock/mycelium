@@ -14,7 +14,7 @@ services:
     secrets:
       - neo4j_auth_file
   spread:
-    image: josiahdc/spread:0.1
+    image: josiahdc/spread:0.2
     build:
       context: .
       dockerfile: docker/spread/Dockerfile
@@ -26,7 +26,7 @@ services:
       mode: replicated
       replicas: 1
   symbiosis:
-    image: josiahdc/symbiosis:0.1
+    image: josiahdc/symbiosis:0.2
     ports:
       - "33933:33333"
     build:
