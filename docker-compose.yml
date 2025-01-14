@@ -14,7 +14,7 @@ services:
     secrets:
       - neo4j_auth_file
   spread:
-    image: josiahdc/spread:0.2
+    image: josiahdc/spread:0.1
     build:
       context: .
       dockerfile: docker/spread/Dockerfile
