@@ -45,22 +45,36 @@ class NutrientRequest(BaseModel):
 async def provide_nutrient(nutrient_request: NutrientRequest):
     logger.info(f"providing nutrient: {nutrient_request}")
     async with AsyncGraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH) as graph:
-        await create_nutrient(graph,
-                              nutrient_request.research_topic,
-                              nutrient_request.category,
-                              nutrient_request.context)
+        nutrient_id = await create_nutrient(graph,
+                                            nutrient_request.research_topic,
+                                            nutrient_request.category,
+                                            nutrient_request.context)
+        await create_spore(graph, nutrient_id)
 
 
 async def create_nutrient(graph, research_topic, category, context):
-    await graph.execute_query(
+    response = await graph.execute_query(
         """
         CREATE (nutrient:Nutrient {topic: $research_topic, category: $category})
         CREATE (context:Context {content: $context})
         CREATE (nutrient)-[:DESCRIBED_BY]->(context)
+        RETURN elementId(nutrient)
         """,
         research_topic=research_topic,
         category=category,
         context=context)
+    return response.records[0][0]
+
+
+async def create_spore(graph, nutrient_id):
+    await graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = $nutrient_id
+        CREATE (spore:Spore {inquiry: nutrient.topic})
+        CREATE (spore)-[:SEEKING]->(nutrient)
+        """,
+        nutrient_id=nutrient_id)
 
 
 @app.post("/clear")
