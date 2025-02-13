@@ -16,8 +16,7 @@ services:
   spread:
     image: josiahdc/spread:0.1
     build:
-      context: .
-      dockerfile: docker/spread/Dockerfile
+      context: services/spread
     env_file:
       - secrets/mycelium.env
     depends_on:
@@ -30,8 +29,7 @@ services:
     ports:
       - "33933:33333"
     build:
-      context: .
-      dockerfile: docker/symbiosis/Dockerfile
+      context: services/symbiosis
     env_file:
       - secrets/mycelium.env
     depends_on:

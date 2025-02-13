@@ -3,7 +3,7 @@ import os
 import pytest
 from starlette.testclient import TestClient
 
-from mycelium.symbiosis.entrypoint import app
+from symbiosis.entrypoint import app
 
 SYMBIOSIS_API_KEY = os.getenv("SYMBIOSIS_API_KEY")
 

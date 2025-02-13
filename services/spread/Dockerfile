@@ -4,6 +4,6 @@ WORKDIR /atelier
 COPY ./requirements.txt /atelier/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /atelier/requirements.txt
 
-COPY ./packages/mycelium /atelier/mycelium
+COPY ./packages/spread /atelier/spread
 
-CMD ["python3", "-m", "mycelium.spread.entrypoint"]
+CMD ["python3", "-m", "spread.entrypoint"]
