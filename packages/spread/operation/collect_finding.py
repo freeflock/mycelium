@@ -1,11 +1,9 @@
 from loguru import logger
 
 from communal.graph import engage, disengage, query_inquiry_without_finding, create_finding
-from spread.operation.framework import looping_operation
 from spread.sonar import execute_search
 
 
-@looping_operation
 async def collect_finding(graph, engagement_handle):
     logger.info("querying inquiry without finding")
     region_id, inquiry = await query_inquiry_without_finding(graph)
@@ -25,4 +23,3 @@ async def collect_finding(graph, engagement_handle):
         return True
     finally:
         await disengage(graph, engagement_handle)
-

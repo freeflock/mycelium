@@ -4,12 +4,10 @@ from pydantic import BaseModel
 
 from communal.graph import engage, disengage, create_region, query_nutrient_topic_and_context_from_claim, \
     query_relevant_claim_without_region
-from spread.operation.framework import looping_operation
 
 inference_client = AsyncOpenAI()
 
 
-@looping_operation
 async def add_region_to_claim(graph, engagement_handle):
     logger.info("querying relevant claim without region")
     source_claim_id, claim_content, source_region_id = await query_relevant_claim_without_region(graph)

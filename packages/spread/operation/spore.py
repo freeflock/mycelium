@@ -1,10 +1,8 @@
 from loguru import logger
 
 from communal.graph import query_nutrient_without_seeking_spore, engage, create_spore, disengage
-from spread.operation.framework import looping_operation
 
 
-@looping_operation
 async def spore(graph, engagement_handle):
     logger.info("querying nutrient without seeking spore")
     nutrient_id = await query_nutrient_without_seeking_spore(graph)

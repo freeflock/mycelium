@@ -2,17 +2,18 @@ from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from communal.graph import query_spore_without_region, engage, query_nutrient_topic_and_context_from_spore, \
-    disengage, create_initial_region
-from spread.operation.framework import looping_operation
+from communal.graph import (query_spore_with_fewer_than_max_regions, engage,
+                            query_nutrient_topic_and_context_from_spore, \
+                            disengage, create_initial_region)
 
 inference_client = AsyncOpenAI()
 
+MAX_INITIAL_REGIONS = 3
 
-@looping_operation
+
 async def add_region_to_spore(graph, engagement_handle):
     logger.info("querying spore without region")
-    spore_id = await query_spore_without_region(graph)
+    spore_id = await query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS)
     if spore_id is None:
         logger.info("no spore without region")
         return False

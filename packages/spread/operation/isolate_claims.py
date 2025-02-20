@@ -5,12 +5,10 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from communal.graph import engage, disengage, query_finding_without_claims, create_claim
-from spread.operation.framework import looping_operation
 
 inference_client = AsyncOpenAI()
 
 
-@looping_operation
 async def isolate_claims(graph, engagement_handle):
     logger.info("querying finding without claims")
     region_id, finding_content, citations = await query_finding_without_claims(graph)
@@ -51,11 +49,10 @@ async def generate_claims(finding_content, citations):
                 "role": "system",
                 "content": f"""
 Given some content, and a list of citations, come up with a list of claims made in the content.
-Do not include any information beyond what is presented in the content.
 Include all claims made in the content which include a citation.
 Do not include any claims which do not have a citation.
 Each claim should fully encapsulate the pertinent information presented in the content.
-Each claim should include all relevant context required for the claim to stand alone.
+Each claim should include enough context for the claim to be understood by itself.
 Each claim should be unique.
 
 Citations are provided in brackets after a claim, and correspond to the index of the url in the provided citation list.

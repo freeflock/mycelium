@@ -100,14 +100,17 @@ async def query_claims(graph, nutrient_id):
     return [{"claim_content": record[0], "claim_citations": record[1]} for record in response.records]
 
 
-async def query_spore_without_region(graph):
+async def query_spore_with_fewer_than_max_regions(graph, max_regions):
     response = await graph.execute_query(
         """
         MATCH (spore:Spore)
-        WHERE NOT (spore)-[:SPREAD]-(:Region)
+        OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
+        WITH spore, count(region) AS region_count
+        WHERE region_count < $max_regions
             AND NOT (:Engagement)-[:ENGAGED]->(spore)
         RETURN elementId(spore)
-        """)
+        """,
+        max_regions=max_regions)
     if len(response.records) == 0:
         return None
     return response.records[0][0]

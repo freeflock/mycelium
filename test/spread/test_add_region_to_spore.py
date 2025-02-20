@@ -22,4 +22,7 @@ async def test_success():
         await create_nutrient(graph, "mycelium", "test", "mycelium in a fungal context")
         assert await spore(graph, "test") is True
         assert await add_region_to_spore(graph, "test") is True
-        assert await query_node_count(graph) == 5
+        assert await add_region_to_spore(graph, "test") is True
+        assert await add_region_to_spore(graph, "test") is True
+        assert await add_region_to_spore(graph, "test") is False
+        assert await query_node_count(graph) == 9

@@ -39,7 +39,7 @@ def test_fruit():
     response = requests.post(f"{BASE_URL}/fruit", headers=headers)
     assert response.status_code == 200
     collation = response.json().get("collation")
-    print(collation)
+    print(collation.get("content"))
 
 
 def test_visualize():

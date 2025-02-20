@@ -4,12 +4,10 @@ from pydantic import BaseModel
 
 from communal.graph import query_claim_without_relevance_or_terminus, engage, query_all_nutrients, \
     bind_claim_to_nutrient, create_terminus, disengage
-from spread.operation.framework import looping_operation
 
 inference_client = AsyncOpenAI()
 
 
-@looping_operation
 async def determine_claim_relevance(graph, engagement_handle):
     logger.info("querying claim without relevance or terminus")
     claim_id, claim_content = await query_claim_without_relevance_or_terminus(graph)
