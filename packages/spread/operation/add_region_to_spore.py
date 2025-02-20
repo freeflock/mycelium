@@ -19,8 +19,8 @@ async def add_region_to_spore(graph, engagement_handle):
         return False
     else:
         logger.info("found spore without region")
-    engagement_id = await engage(graph, spore_id, engagement_handle)
-    if engagement_id is None:
+    successfully_engaged = await engage(graph, spore_id, engagement_handle)
+    if not successfully_engaged:
         return False
     try:
         research_topic, context = await query_nutrient_topic_and_context_from_spore(graph, spore_id)
@@ -28,10 +28,9 @@ async def add_region_to_spore(graph, engagement_handle):
         logger.info(f"generated initial inquiry: {inquiry}")
         await create_initial_region(graph, spore_id, inquiry)
         logger.info("created region")
-        await disengage(graph, engagement_handle)
         return True
     finally:
-        await disengage(graph, engagement_handle)
+        await disengage(graph, spore_id)
 
 
 class InquiryResult(BaseModel):

@@ -12,8 +12,8 @@ async def collect_finding(graph, engagement_handle):
         return False
     else:
         logger.info("found inquiry without finding")
-    engagement_id = await engage(graph, region_id, engagement_handle)
-    if engagement_id is None:
+    successfully_engaged = await engage(graph, region_id, engagement_handle)
+    if not successfully_engaged:
         return False
     try:
         reasoning, content, citations = await execute_search(inquiry)
@@ -22,4 +22,4 @@ async def collect_finding(graph, engagement_handle):
         logger.info("created finding")
         return True
     finally:
-        await disengage(graph, engagement_handle)
+        await disengage(graph, region_id)

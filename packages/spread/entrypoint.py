@@ -29,12 +29,12 @@ async def main():
         try:
             async with AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
                 async with asyncio.TaskGroup() as task_group:
-                    task_group.create_task(loop_operation(spore(graph, engagement_handle))),
-                    task_group.create_task(loop_operation(add_region_to_spore(graph, engagement_handle))),
-                    task_group.create_task(loop_operation(collect_finding(graph, engagement_handle))),
-                    task_group.create_task(loop_operation(isolate_claims(graph, engagement_handle))),
-                    task_group.create_task(loop_operation(determine_claim_relevance(graph, engagement_handle))),
-                    task_group.create_task(loop_operation(add_region_to_claim(graph, engagement_handle)))
+                    task_group.create_task(loop_operation(spore, graph, engagement_handle)),
+                    task_group.create_task(loop_operation(add_region_to_spore, graph, engagement_handle)),
+                    task_group.create_task(loop_operation(collect_finding, graph, engagement_handle)),
+                    task_group.create_task(loop_operation(isolate_claims, graph, engagement_handle)),
+                    task_group.create_task(loop_operation(determine_claim_relevance, graph, engagement_handle)),
+                    task_group.create_task(loop_operation(add_region_to_claim, graph, engagement_handle))
         except KeyboardInterrupt:
             raise
         except Exception as error:

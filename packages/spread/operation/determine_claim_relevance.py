@@ -16,8 +16,8 @@ async def determine_claim_relevance(graph, engagement_handle):
         return False
     else:
         logger.info("found claim without relevance or terminus")
-    engagement_id = await engage(graph, claim_id, engagement_handle)
-    if engagement_id is None:
+    successfully_engaged = await engage(graph, claim_id, engagement_handle)
+    if not successfully_engaged:
         return False
     try:
         nutrients = await query_all_nutrients(graph)
@@ -35,7 +35,7 @@ async def determine_claim_relevance(graph, engagement_handle):
             await create_terminus(graph, claim_id)
         return True
     finally:
-        await disengage(graph, engagement_handle)
+        await disengage(graph, claim_id)
 
 
 class RelevenceResult(BaseModel):

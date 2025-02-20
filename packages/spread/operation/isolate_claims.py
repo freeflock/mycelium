@@ -17,8 +17,8 @@ async def isolate_claims(graph, engagement_handle):
         return False
     else:
         logger.info("found finding without claims")
-    engagement_id = await engage(graph, region_id, engagement_handle)
-    if engagement_id is None:
+    successfully_engaged = await engage(graph, region_id, engagement_handle)
+    if not successfully_engaged:
         return False
     try:
         claims = await generate_claims(finding_content, citations)
@@ -30,7 +30,7 @@ async def isolate_claims(graph, engagement_handle):
             logger.info("created claim")
         return True
     finally:
-        await disengage(graph, engagement_handle)
+        await disengage(graph, region_id)
 
 
 class ClaimsResult(BaseModel):

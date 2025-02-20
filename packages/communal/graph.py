@@ -21,25 +21,26 @@ async def engage(graph, node_id, engagement_handle):
         """
         MATCH (engagee)
         WHERE elementId(engagee) = $node_id
-            AND NOT (:Engagement)-[:ENGAGED]->(engagee)
-        CREATE (engagement:Engagement {engagement_handle: $engagement_handle})-[:ENGAGED]->(engagee)
-        return elementId(engagement)
+            AND engagee.engagement IS NULL
+        SET engagee.engagement = $engagement_handle
+        return TRUE
         """,
         node_id=node_id,
         engagement_handle=engagement_handle)
     if len(response.records) == 0:
-        return None
-    return response.records[0][0]
+        return False
+    else:
+        return True
 
 
-async def disengage(graph, engagement_handle):
+async def disengage(graph, node_id):
     await graph.execute_query(
         """
-        MATCH (engagement)
-        WHERE engagement.engagement_handle = $engagement_handle
-        DETACH DELETE engagement
+        MATCH (engagee)
+        WHERE elementId(engagee) = $node_id
+        REMOVE engagee.engagement
         """,
-        engagement_handle=engagement_handle)
+        node_id=node_id)
 
 
 async def create_nutrient(graph, research_topic, category, context):
@@ -68,7 +69,7 @@ async def query_nutrient_without_seeking_spore(graph):
         """
         MATCH (nutrient:Nutrient)
         WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
-            AND NOT (:Engagement)-[:ENGAGED]->(nutrient)
+            AND nutrient.engagement IS NULL
         RETURN elementId(nutrient)
         """)
     if len(response.records) == 0:
@@ -107,7 +108,7 @@ async def query_spore_with_fewer_than_max_regions(graph, max_regions):
         OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
         WITH spore, count(region) AS region_count
         WHERE region_count < $max_regions
-            AND NOT (:Engagement)-[:ENGAGED]->(spore)
+            AND spore.engagement IS NULL
         RETURN elementId(spore)
         """,
         max_regions=max_regions)
@@ -163,7 +164,7 @@ async def query_inquiry_without_finding(graph):
         """
         MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
         WHERE NOT (region)-[:FOUND]->(:Finding)
-            AND NOT (:Engagement)-[:ENGAGED]->(region)
+            AND region.engagement IS NULL
         RETURN elementId(region), inquiry.content
         """)
     if len(response.records) == 0:
@@ -190,7 +191,7 @@ async def query_finding_without_claims(graph):
         """
         MATCH (region:Region)-[:FOUND]->(finding:Finding)
         WHERE NOT (region)-[:CLAIMED]->(:Claim)
-            AND NOT (:Engagement)-[:ENGAGED]->(region)
+            AND region.engagement IS NULL
         RETURN elementId(region), finding.content, finding.citations
         """)
     if len(response.records) == 0:
@@ -217,7 +218,7 @@ async def query_claim_without_relevance_or_terminus(graph):
         MATCH (claim:Claim)
         WHERE NOT (claim)-[:TERMINATES]->(:Terminus)
             AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
-            AND NOT (:Engagement)-[:ENGAGED]->(claim)
+            AND claim.engagement IS NULL
         RETURN elementId(claim), claim.content
         """)
     if len(response.records) == 0:
@@ -230,7 +231,8 @@ async def bind_claim_to_nutrient(graph, claim_id, nutrient_id):
     await graph.execute_query(
         """
         MATCH (claim:Claim), (nutrient:Nutrient)
-        WHERE elementId(claim) = $claim_id AND elementId(nutrient) = $nutrient_id
+        WHERE elementId(claim) = $claim_id
+            AND elementId(nutrient) = $nutrient_id
         CREATE (claim)-[:RELEVANT_TO]->(nutrient)
         """,
         claim_id=claim_id,
@@ -253,7 +255,7 @@ async def query_relevant_claim_without_region(graph):
         MATCH (claim:Claim)<-[:CLAIMED]-(region:Region)
         WHERE (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (claim)-[:INFORMED]->(:Region)
-            AND NOT (:Engagement)-[:ENGAGED]->(claim)
+            AND claim.engagement IS NULL
         RETURN elementId(claim), claim.content, elementId(region)
         """)
     if len(response.records) == 0:
