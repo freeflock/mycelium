@@ -2,10 +2,10 @@ services:
   graph:
     image: neo4j:5.26.2-community-bullseye
     volumes:
-      - cadastre-neo4j-config:/config
-      - cadastre-neo4j-logs:/logs
-      - cadastre-neo4j-data:/data
-      - cadastre-neo4j-plugins:/plugins
+      - mycelium-neo4j-config:/config
+      - mycelium-neo4j-logs:/logs
+      - mycelium-neo4j-data:/data
+      - mycelium-neo4j-plugins:/plugins
     environment:
       - NEO4J_AUTH_FILE=/run/secrets/neo4j_auth_file
     ports:
@@ -40,7 +40,7 @@ secrets:
     file: secrets/neo4j_auth.txt
 
 volumes:
-  cadastre-neo4j-config:
-  cadastre-neo4j-logs:
-  cadastre-neo4j-data:
-  cadastre-neo4j-plugins:
+  mycelium-neo4j-config:
+  mycelium-neo4j-logs:
+  mycelium-neo4j-data:
+  mycelium-neo4j-plugins:
