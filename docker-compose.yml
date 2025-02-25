@@ -1,11 +1,11 @@
 services:
   graph:
-    image: neo4j:5.26.0-community-bullseye
+    image: neo4j:5.26.2-community-bullseye
     volumes:
-      - mycelium-neo4j-config:/config
-      - mycelium-neo4j-logs:/logs
-      - mycelium-neo4j-data:/data
-      - mycelium-neo4j-plugins:/plugins
+      - cadastre-neo4j-config:/config
+      - cadastre-neo4j-logs:/logs
+      - cadastre-neo4j-data:/data
+      - cadastre-neo4j-plugins:/plugins
     environment:
       - NEO4J_AUTH_FILE=/run/secrets/neo4j_auth_file
     ports:
@@ -14,36 +14,33 @@ services:
     secrets:
       - neo4j_auth_file
   spread:
-    image: josiahdc/spread:0.1
+    image: josiahdc/spread:0.3
     build:
       context: .
-      dockerfile: docker/spread/Dockerfile
+      dockerfile: services/spread/Dockerfile
     env_file:
       - secrets/mycelium.env
     depends_on:
       - graph
-    deploy:
-      mode: replicated
-      replicas: 1
   symbiosis:
-    image: josiahdc/symbiosis:0.2
+    image: josiahdc/symbiosis:0.3
     ports:
       - "33933:33333"
     build:
       context: .
-      dockerfile: docker/symbiosis/Dockerfile
+      dockerfile: services/symbiosis/Dockerfile
     env_file:
       - secrets/mycelium.env
     depends_on:
-      - graph
       - spread
+      - graph
 
 secrets:
   neo4j_auth_file:
     file: secrets/neo4j_auth.txt
 
 volumes:
-  mycelium-neo4j-config:
-  mycelium-neo4j-logs:
-  mycelium-neo4j-data:
-  mycelium-neo4j-plugins:
+  cadastre-neo4j-config:
+  cadastre-neo4j-logs:
+  cadastre-neo4j-data:
+  cadastre-neo4j-plugins:
