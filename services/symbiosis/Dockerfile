@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir --upgrade -r /atelier/requirements.txt
 COPY packages/symbiosis /atelier/symbiosis
 COPY packages/communal /atelier/communal
 
-CMD ["fastapi", "run", "symbiosis/entrypoint.py", "--port", "33333", "--workers", "1"]
+CMD ["gunicorn", "--bind", "0.0.0.0:33333", "-k", "uvicorn_worker.UvicornWorker", "-w", "1", "symbiosis.entrypoint:app"]
