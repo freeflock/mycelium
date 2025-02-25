@@ -5,10 +5,9 @@ from fastapi import FastAPI
 from neo4j import AsyncGraphDatabase
 from openai import AsyncOpenAI
 from pydantic import BaseModel
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from communal.graph import clear_graph, create_nutrient, query_all_relationships, query_all_nutrients, query_claims
+from communal.api_framework import ApiKeyValidator
 
 NEO4J_URI = os.getenv("NEO4J_URI")
 NEO4J_AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
@@ -18,20 +17,6 @@ logger.setLevel(logging.INFO)
 
 inference_client = AsyncOpenAI()
 
-
-class ApiKeyValidator(BaseHTTPMiddleware):
-    def __init__(self, app):
-        self.api_key = os.getenv("SYMBIOSIS_API_KEY")
-        super().__init__(app)
-
-    async def dispatch(self, request, call_next):
-        request_key = request.headers.get("x-api-key")
-        if request_key == self.api_key:
-            return await call_next(request)
-        else:
-            return JSONResponse(status_code=403, content={})
-
-
 app = FastAPI()
 app.add_middleware(ApiKeyValidator)
 
@@ -40,6 +25,18 @@ class NutrientRequest(BaseModel):
     research_topic: str
     category: str
     context: str
+
+
+async def create_nutrient(graph, research_topic, category, context):
+    await graph.execute_query(
+        """
+        CREATE (nutrient:Nutrient {topic: $research_topic, category: $category})
+        CREATE (context:Context {content: $context})
+        CREATE (nutrient)-[:DESCRIBED_BY]->(context)
+        """,
+        research_topic=research_topic,
+        category=category,
+        context=context)
 
 
 @app.post("/provide_nutrient")
@@ -52,11 +49,41 @@ async def provide_nutrient(nutrient_request: NutrientRequest):
                               nutrient_request.context)
 
 
+async def clear_graph(graph):
+    await graph.execute_query(
+        """
+        MATCH (n)
+        DETACH DELETE n
+        """)
+
+
 @app.post("/clear")
 async def clear():
     logger.info(f"clearing graph")
     async with AsyncGraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH) as graph:
         await clear_graph(graph)
+
+
+async def query_all_nutrients(graph):
+    response = await graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        RETURN elementId(nutrient), nutrient.topic
+        """)
+    return {record[0]: record[1] for record in response.records}
+
+
+async def query_claims(graph, nutrient_id):
+    response = await graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)<-[:RELEVANT_TO]-(claim:Claim)
+        WHERE elementId(nutrient) = $nutrient_id
+        RETURN claim.content, claim.citations
+        """,
+        nutrient_id=nutrient_id)
+    if len(response.records) == 0:
+        return None
+    return [{"claim_content": record[0], "claim_citations": record[1]} for record in response.records]
 
 
 @app.post("/fruit")
@@ -96,6 +123,16 @@ Include all citations for each claim in the collated output.
         model="o1",
     )
     return completion.choices[0].message
+
+
+async def query_all_relationships(graph):
+    response = await graph.execute_query(
+        """
+        MATCH (s)-[r]->(t)
+        RETURN id(s) as source, LABELS(s) as source_labels, id(t) as target, LABELS(t) as target_labels, type(r) as 
+        relationship
+        """)
+    return response.records
 
 
 @app.post("/visualize")

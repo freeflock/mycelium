@@ -1,9 +1,11 @@
 import os
 import re
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 SONAR_API_KEY = os.getenv("SONAR_API_KEY")
+
+client = AsyncOpenAI(api_key=SONAR_API_KEY, base_url="https://api.perplexity.ai")
 
 
 async def execute_search(inquiry):
@@ -11,9 +13,8 @@ async def execute_search(inquiry):
         {
             "role": "system",
             "content": (
-                "You are an AI research assistant"
-                "Be extremely thorough and provide as much detail as possible."
-                "Cite all sources and provide a summary of any content relevant to the search query."
+                "Present the content as a series of claims, each of which contains all relevant context, and is unique."
+                "Cite all sources, Do not include any claims which do not have a citation."
             ),
         },
         {
@@ -24,12 +25,9 @@ async def execute_search(inquiry):
         },
     ]
 
-    client = OpenAI(api_key=SONAR_API_KEY, base_url="https://api.perplexity.ai")
-
-    # chat completion without streaming
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model="sonar-reasoning-pro",
-        messages=messages,
+        messages=messages
     )
     result = response.choices[0].message.content
     match = re.match(r"^<think>(.*)</think>(.*)$", result, re.DOTALL)

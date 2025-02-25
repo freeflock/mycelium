@@ -1,11 +1,9 @@
 import asyncio
-import os
 import traceback
 from asyncio import sleep
 from uuid import uuid4
 
 from loguru import logger
-from neo4j import AsyncGraphDatabase
 
 from spread.operation.add_region_to_claim import add_region_to_claim
 from spread.operation.add_region_to_spore import add_region_to_spore
@@ -15,26 +13,18 @@ from spread.operation.framework import loop_operation
 from spread.operation.isolate_claims import isolate_claims
 from spread.operation.spore import spore
 
-NEO4J_URI = os.getenv("NEO4J_URI")
-logger.info(f"NEO4J_URI: {NEO4J_URI}")
-NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
-logger.info(f"NEO4J_USERNAME: {NEO4J_USERNAME}")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
-logger.info(f"NEO4J_PASSWORD: xxx")
-
 
 async def main():
     engagement_handle = str(uuid4())
     while True:
         try:
-            async with AsyncGraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
-                async with asyncio.TaskGroup() as task_group:
-                    task_group.create_task(loop_operation(spore, graph, engagement_handle)),
-                    task_group.create_task(loop_operation(add_region_to_spore, graph, engagement_handle)),
-                    task_group.create_task(loop_operation(collect_finding, graph, engagement_handle)),
-                    task_group.create_task(loop_operation(isolate_claims, graph, engagement_handle)),
-                    task_group.create_task(loop_operation(determine_claim_relevance, graph, engagement_handle)),
-                    task_group.create_task(loop_operation(add_region_to_claim, graph, engagement_handle))
+            async with asyncio.TaskGroup() as task_group:
+                task_group.create_task(loop_operation(spore, engagement_handle)),
+                task_group.create_task(loop_operation(add_region_to_spore, engagement_handle)),
+                task_group.create_task(loop_operation(collect_finding, engagement_handle)),
+                task_group.create_task(loop_operation(isolate_claims, engagement_handle)),
+                task_group.create_task(loop_operation(determine_claim_relevance, engagement_handle)),
+                task_group.create_task(loop_operation(add_region_to_claim, engagement_handle))
         except KeyboardInterrupt:
             raise
         except Exception as error:

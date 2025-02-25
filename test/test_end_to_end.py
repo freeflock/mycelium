@@ -3,7 +3,7 @@ import os
 import requests
 
 BASE_URL = "http://0.0.0.0:33933"
-SYMBIOSIS_API_KEY = os.getenv("SYMBIOSIS_API_KEY")
+MYCELIUM_API_KEY = os.getenv("MYCELIUM_API_KEY")
 
 
 def test_no_api_key():
@@ -18,7 +18,7 @@ def test_wrong_api_key():
 
 
 def test_provide_nutrient():
-    headers = {"x-api-key": SYMBIOSIS_API_KEY}
+    headers = {"x-api-key": MYCELIUM_API_KEY}
     payload = {
         "research_topic": "Mycelium sensitivity to light",
         "category": "research",
@@ -29,21 +29,22 @@ def test_provide_nutrient():
 
 
 def test_clear():
-    headers = {"x-api-key": SYMBIOSIS_API_KEY}
+    headers = {"x-api-key": MYCELIUM_API_KEY}
     response = requests.post(f"{BASE_URL}/clear", headers=headers)
     assert response.status_code == 200
 
 
 def test_fruit():
-    headers = {"x-api-key": SYMBIOSIS_API_KEY}
+    headers = {"x-api-key": MYCELIUM_API_KEY}
     response = requests.post(f"{BASE_URL}/fruit", headers=headers)
     assert response.status_code == 200
     collation = response.json().get("collation")
+    print("\n\n--- result ---\n")
     print(collation.get("content"))
 
 
 def test_visualize():
-    headers = {"x-api-key": SYMBIOSIS_API_KEY}
+    headers = {"x-api-key": MYCELIUM_API_KEY}
     response = requests.post(f"{BASE_URL}/visualize", headers=headers)
     assert response.status_code == 200
     collation = response.json().get("graph_data")

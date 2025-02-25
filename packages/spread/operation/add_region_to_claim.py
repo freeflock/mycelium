@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -10,24 +12,25 @@ inference_client = AsyncOpenAI()
 
 async def add_region_to_claim(graph, engagement_handle):
     logger.info("querying relevant claim without region")
-    source_claim_id, claim_content, source_region_id = await query_relevant_claim_without_region(graph)
+    source_claim_id, claim_content, source_region_id = query_relevant_claim_without_region(graph)
     if source_claim_id is None:
         logger.info("no relevant claim without region")
+        await sleep(1)
         return False
     else:
         logger.info("found relevant claim without region")
-    successfully_engaged = await engage(graph, source_claim_id, engagement_handle)
+    successfully_engaged = engage(graph, source_claim_id, engagement_handle)
     if not successfully_engaged:
         return False
     try:
-        research_topic, context = await query_nutrient_topic_and_context_from_claim(graph, source_claim_id)
+        research_topic, context = query_nutrient_topic_and_context_from_claim(graph, source_claim_id)
         inquiry = await generate_inquiry_from_claim(research_topic, context, claim_content)
         logger.info(f"generated inquiry: {inquiry}")
-        await create_region(graph, source_region_id, source_claim_id, inquiry)
+        create_region(graph, source_region_id, source_claim_id, inquiry)
         logger.info("created region")
         return True
     finally:
-        await disengage(graph, source_claim_id)
+        disengage(graph, source_claim_id)
 
 
 class InquiryResult(BaseModel):

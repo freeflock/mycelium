@@ -1,3 +1,4 @@
+from asyncio import sleep
 from typing import List
 
 from loguru import logger
@@ -11,13 +12,14 @@ inference_client = AsyncOpenAI()
 
 async def isolate_claims(graph, engagement_handle):
     logger.info("querying finding without claims")
-    region_id, finding_content, citations = await query_finding_without_claims(graph)
+    region_id, finding_content, citations = query_finding_without_claims(graph)
     if region_id is None:
         logger.info("no finding without claims")
+        await sleep(1)
         return False
     else:
         logger.info("found finding without claims")
-    successfully_engaged = await engage(graph, region_id, engagement_handle)
+    successfully_engaged = engage(graph, region_id, engagement_handle)
     if not successfully_engaged:
         return False
     try:
@@ -26,11 +28,11 @@ async def isolate_claims(graph, engagement_handle):
         for claim in claims:
             claim_content = claim.content
             claim_citations = claim.citations
-            await create_claim(graph, region_id, claim_content, claim_citations)
+            create_claim(graph, region_id, claim_content, claim_citations)
             logger.info("created claim")
         return True
     finally:
-        await disengage(graph, region_id)
+        disengage(graph, region_id)
 
 
 class ClaimsResult(BaseModel):

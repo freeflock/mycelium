@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -10,32 +12,33 @@ inference_client = AsyncOpenAI()
 
 async def determine_claim_relevance(graph, engagement_handle):
     logger.info("querying claim without relevance or terminus")
-    claim_id, claim_content = await query_claim_without_relevance_or_terminus(graph)
+    claim_id, claim_content = query_claim_without_relevance_or_terminus(graph)
     if claim_id is None:
         logger.info("no claim without relevance or terminus")
+        await sleep(1)
         return False
     else:
         logger.info("found claim without relevance or terminus")
-    successfully_engaged = await engage(graph, claim_id, engagement_handle)
+    successfully_engaged = engage(graph, claim_id, engagement_handle)
     if not successfully_engaged:
         return False
     try:
-        nutrients = await query_all_nutrients(graph)
+        nutrients = query_all_nutrients(graph)
         relevant_to_at_least_one = False
         for nutrient_id, research_topic in nutrients.items():
             relevant = await determine_relevance(research_topic, claim_content)
             if relevant:
-                await bind_claim_to_nutrient(graph, claim_id, nutrient_id)
+                bind_claim_to_nutrient(graph, claim_id, nutrient_id)
                 logger.info(f"bound claim to nutrient: {research_topic}")
                 relevant_to_at_least_one = True
             else:
                 logger.info(f"claim not relevant to nutrient: {research_topic}")
         if not relevant_to_at_least_one:
             logger.info("claim not relevant to any nutrient")
-            await create_terminus(graph, claim_id)
+            create_terminus(graph, claim_id)
         return True
     finally:
-        await disengage(graph, claim_id)
+        disengage(graph, claim_id)
 
 
 class RelevenceResult(BaseModel):

@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -13,24 +15,25 @@ MAX_INITIAL_REGIONS = 3
 
 async def add_region_to_spore(graph, engagement_handle):
     logger.info("querying spore without region")
-    spore_id = await query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS)
+    spore_id = query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS)
     if spore_id is None:
         logger.info("no spore without region")
+        await sleep(1)
         return False
     else:
         logger.info("found spore without region")
-    successfully_engaged = await engage(graph, spore_id, engagement_handle)
+    successfully_engaged = engage(graph, spore_id, engagement_handle)
     if not successfully_engaged:
         return False
     try:
-        research_topic, context = await query_nutrient_topic_and_context_from_spore(graph, spore_id)
+        research_topic, context = query_nutrient_topic_and_context_from_spore(graph, spore_id)
         inquiry = await generate_initial_inquiry(research_topic, context)
         logger.info(f"generated initial inquiry: {inquiry}")
-        await create_initial_region(graph, spore_id, inquiry)
+        create_initial_region(graph, spore_id, inquiry)
         logger.info("created region")
         return True
     finally:
-        await disengage(graph, spore_id)
+        disengage(graph, spore_id)
 
 
 class InquiryResult(BaseModel):
