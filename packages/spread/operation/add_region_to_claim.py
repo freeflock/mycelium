@@ -8,18 +8,19 @@ from communal.graph import engage, disengage, create_region, query_nutrient_topi
     query_relevant_claim_without_region
 
 inference_client = AsyncOpenAI()
+OPERATION_NAME = "add_region_to_claim"
 
 
 async def add_region_to_claim(graph, engagement_handle):
     logger.info("querying relevant claim without region")
-    source_claim_id, claim_content, source_region_id = query_relevant_claim_without_region(graph)
+    source_claim_id, claim_content, source_region_id = query_relevant_claim_without_region(graph, OPERATION_NAME)
     if source_claim_id is None:
         logger.info("no relevant claim without region")
         await sleep(1)
         return False
     else:
         logger.info("found relevant claim without region")
-    successfully_engaged = engage(graph, source_claim_id, engagement_handle)
+    successfully_engaged = engage(graph, source_claim_id, engagement_handle, OPERATION_NAME)
     if not successfully_engaged:
         return False
     try:
@@ -30,7 +31,7 @@ async def add_region_to_claim(graph, engagement_handle):
         logger.info("created region")
         return True
     finally:
-        disengage(graph, source_claim_id)
+        disengage(graph, source_claim_id, OPERATION_NAME)
 
 
 class InquiryResult(BaseModel):

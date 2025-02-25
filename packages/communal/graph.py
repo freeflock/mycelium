@@ -6,16 +6,18 @@ def clear_graph(graph):
         """)
 
 
-def engage(graph, node_id, engagement_handle):
+def engage(graph, node_id, engagement_handle, operation_name):
     response = graph.execute_query(
         """
         MATCH (engagee)
         WHERE elementId(engagee) = $node_id
-            AND engagee.engagement IS NULL
-        SET engagee.engagement = $engagement_handle
-        return TRUE
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(engagee)
+        CREATE (engagement:Engagement {operation: $operation_name, 
+                engagement_handle: $engagement_handle})-[:ENGAGED]->(engagee)
+        RETURN TRUE
         """,
         node_id=node_id,
+        operation_name=operation_name,
         engagement_handle=engagement_handle)
     if len(response.records) == 0:
         return False
@@ -23,14 +25,15 @@ def engage(graph, node_id, engagement_handle):
         return True
 
 
-def disengage(graph, node_id):
+def disengage(graph, node_id, operation_name):
     graph.execute_query(
         """
-        MATCH (engagee)
+        MATCH (engagement:Engagement {operation: $operation_name})-[:ENGAGED]->(engagee)
         WHERE elementId(engagee) = $node_id
-        REMOVE engagee.engagement
+        DETACH DELETE engagement
         """,
-        node_id=node_id)
+        node_id=node_id,
+        operation_name=operation_name)
 
 
 def create_nutrient(graph, research_topic, category, context):
@@ -54,14 +57,15 @@ def query_all_nutrients(graph):
     return {record[0]: record[1] for record in response.records}
 
 
-def query_nutrient_without_seeking_spore(graph):
+def query_nutrient_without_seeking_spore(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (nutrient:Nutrient)
         WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
-            AND nutrient.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
         RETURN elementId(nutrient)
-        """)
+        """,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None
     return response.records[0][0]
@@ -78,17 +82,18 @@ def create_spore(graph, nutrient_id):
         nutrient_id=nutrient_id)
 
 
-def query_spore_with_fewer_than_max_regions(graph, max_regions):
+def query_spore_with_fewer_than_max_regions(graph, max_regions, operation_name):
     response = graph.execute_query(
         """
         MATCH (spore:Spore)
         OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
         WITH spore, count(region) AS region_count
         WHERE region_count < $max_regions
-            AND spore.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(spore)
         RETURN elementId(spore)
         """,
-        max_regions=max_regions)
+        max_regions=max_regions,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None
     return response.records[0][0]
@@ -136,14 +141,15 @@ def create_region(graph, source_region_id, source_claim_id, inquiry):
         inquiry=inquiry)
 
 
-def query_inquiry_without_finding(graph):
+def query_inquiry_without_finding(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
         WHERE NOT (region)-[:FOUND]->(:Finding)
-            AND region.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), inquiry.content
-        """)
+        """,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None, None
     record = response.records[0]
@@ -163,14 +169,15 @@ def create_finding(graph, region_id, reasoning, content, citations):
         citations=citations)
 
 
-def query_finding_without_claims(graph):
+def query_finding_without_claims(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (region:Region)-[:FOUND]->(finding:Finding)
         WHERE NOT (region)-[:CLAIMED]->(:Claim)
-            AND region.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), finding.content, finding.citations
-        """)
+        """,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None, None, None
     record = response.records[0]
@@ -189,15 +196,16 @@ def create_claim(graph, region_id, content, citations):
         citations=citations)
 
 
-def query_claim_without_relevance_or_terminus(graph):
+def query_claim_without_relevance_or_terminus(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (claim:Claim)
         WHERE NOT (claim)-[:TERMINATES]->(:Terminus)
             AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
-            AND claim.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content
-        """)
+        """,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None, None
     record = response.records[0]
@@ -226,15 +234,16 @@ def create_terminus(graph, claim_id):
         claim_id=claim_id)
 
 
-def query_relevant_claim_without_region(graph):
+def query_relevant_claim_without_region(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (claim:Claim)<-[:CLAIMED]-(region:Region)
         WHERE (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (claim)-[:INFORMED]->(:Region)
-            AND claim.engagement IS NULL
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content, elementId(region)
-        """)
+        """,
+        operation_name=operation_name)
     if len(response.records) == 0:
         return None, None, None
     record = response.records[0]

@@ -7,19 +7,21 @@ from pydantic import BaseModel
 
 from communal.graph import engage, disengage, query_finding_without_claims, create_claim
 
+OPERATION_NAME = "isolate_claims"
+
 inference_client = AsyncOpenAI()
 
 
 async def isolate_claims(graph, engagement_handle):
     logger.info("querying finding without claims")
-    region_id, finding_content, citations = query_finding_without_claims(graph)
+    region_id, finding_content, citations = query_finding_without_claims(graph, OPERATION_NAME)
     if region_id is None:
         logger.info("no finding without claims")
         await sleep(1)
         return False
     else:
         logger.info("found finding without claims")
-    successfully_engaged = engage(graph, region_id, engagement_handle)
+    successfully_engaged = engage(graph, region_id, engagement_handle, OPERATION_NAME)
     if not successfully_engaged:
         return False
     try:
@@ -32,7 +34,7 @@ async def isolate_claims(graph, engagement_handle):
             logger.info("created claim")
         return True
     finally:
-        disengage(graph, region_id)
+        disengage(graph, region_id, OPERATION_NAME)
 
 
 class ClaimsResult(BaseModel):
