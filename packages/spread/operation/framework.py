@@ -15,8 +15,8 @@ logger.info(f"NEO4J_PASSWORD: xxx")
 
 
 async def loop_operation(operation, *args, **kwargs):
-    while True:
-        with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
+    with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
+        while True:
             try:
                 tasks = set()
                 while len(tasks) < 10:

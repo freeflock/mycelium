@@ -37,7 +37,10 @@ async def test_fruit():
             category="research",
             context="")
         response = client.post("/provide_nutrient", json=nutrient_request.model_dump(), headers=headers)
-        response = client.post("/fruit", headers=headers)
+        payload = {
+            "category": "research",
+        }
+        response = client.post("/fruit", json=payload, headers=headers)
         assert response.status_code == 200
         content = response.json()
         print(content.get("collation"))

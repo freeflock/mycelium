@@ -64,13 +64,16 @@ async def clear():
         await clear_graph(graph)
 
 
-async def query_all_nutrients(graph):
+async def query_nutrient_id_by_category(graph, category):
     response = await graph.execute_query(
         """
         MATCH (nutrient:Nutrient)
+        WHERE nutrient.category = $category
         RETURN elementId(nutrient), nutrient.topic
-        """)
-    return {record[0]: record[1] for record in response.records}
+        """,
+        category=category)
+    record = response.records[0]
+    return record[0], record[1]
 
 
 async def query_claims(graph, nutrient_id):
@@ -86,16 +89,18 @@ async def query_claims(graph, nutrient_id):
     return [{"claim_content": record[0], "claim_citations": record[1]} for record in response.records]
 
 
+class FruitRequest(BaseModel):
+    category: str
+
+
 @app.post("/fruit")
-async def fruit():
+async def fruit(fruit_request: FruitRequest):
     logger.info(f"fruiting")
     async with AsyncGraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH) as graph:
-        nutrients = await query_all_nutrients(graph)
-        nutrient_id = list(nutrients.keys())[0]
-        topic = nutrients.get(nutrient_id)
+        nutrient_id, nutrient_topic = await query_nutrient_id_by_category(graph, fruit_request.category)
         claims = await query_claims(graph, nutrient_id)
         if claims is not None:
-            collation = await collate_claims(topic, claims)
+            collation = await collate_claims(nutrient_topic, claims)
         else:
             collation = None
         return {"collation": collation}

@@ -36,7 +36,10 @@ def test_clear():
 
 def test_fruit():
     headers = {"x-api-key": MYCELIUM_API_KEY}
-    response = requests.post(f"{BASE_URL}/fruit", headers=headers)
+    payload = {
+        "category": "research",
+    }
+    response = requests.post(f"{BASE_URL}/fruit", json=payload, headers=headers)
     assert response.status_code == 200
     collation = response.json().get("collation")
     print("\n\n--- result ---\n")
