@@ -1,40 +1,53 @@
-from asyncio import sleep
-
-from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from communal.graph import (query_spore_with_fewer_than_max_regions, engage,
-                            query_nutrient_topic_and_context_from_spore, \
-                            disengage, create_initial_region)
-from spread.operation.framework import OperationName
+from communal.graph import query_nutrient_topic_and_context_from_spore, create_initial_region
+from spread.operation.framework import Operation
 
 inference_client = AsyncOpenAI()
-MAX_INITIAL_REGIONS = 3
 
 
-async def add_region_to_spore(graph, engagement_handle):
-    operation_name = OperationName.add_region_to_spore
-    logger.info("querying spore without region")
-    spore_id = query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS, operation_name)
-    if spore_id is None:
-        logger.info("no spore without region")
-        await sleep(1)
-        return False
-    else:
-        logger.info("found spore without region")
-    successfully_engaged = engage(graph, spore_id, engagement_handle, operation_name)
-    if not successfully_engaged:
-        return False
-    try:
-        research_topic, context = query_nutrient_topic_and_context_from_spore(graph, spore_id)
+class EngagementData(BaseModel):
+    spore_id: str
+
+
+class AddRegionToSpore(Operation):
+    def __init__(self, graph, engagement_handle):
+        super().__init__(graph, engagement_handle, "add_region_to_spore")
+        self.engagement_data = None
+        self.max_initial_regions = 3
+
+    async def query_node_to_engage(self) -> str | None:
+        self.engagement_data = query_spore_with_fewer_than_max_regions(self.graph, self.operation_name,
+                                                                       self.max_initial_regions)
+        if self.engagement_data is not None:
+            return self.engagement_data.spore_id
+        else:
+            return None
+
+    async def act_on_engaged_node(self):
+        research_topic, context = query_nutrient_topic_and_context_from_spore(self.graph, self.engagement_data.spore_id)
         inquiry = await generate_initial_inquiry(research_topic, context)
-        logger.info(f"generated initial inquiry: {inquiry}")
-        create_initial_region(graph, spore_id, inquiry)
-        logger.info("created region")
-        return True
-    finally:
-        disengage(graph, spore_id, operation_name)
+        create_initial_region(self.graph, self.engagement_data.spore_id, inquiry)
+
+
+def query_spore_with_fewer_than_max_regions(graph, operation_name, max_regions):
+    response = graph.execute_query(
+        """
+        MATCH (spore:Spore)
+        OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
+        WITH spore, count(region) AS region_count
+        WHERE region_count < $max_regions
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(spore)
+        RETURN elementId(spore)
+        """,
+        max_regions=max_regions,
+        operation_name=operation_name)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    engagement_data = EngagementData(spore_id=record[0])
+    return engagement_data
 
 
 class InquiryResult(BaseModel):

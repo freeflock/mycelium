@@ -1,11 +1,11 @@
 import pytest
-from neo4j import AsyncGraphDatabase, GraphDatabase
+from neo4j import GraphDatabase
 
 from communal.graph import clear_graph, create_nutrient
-from spread.operation.add_region_to_spore import add_region_to_spore
-from spread.operation.collect_finding import collect_finding
-from spread.operation.isolate_claims import isolate_claims
-from spread.operation.spore import spore
+from spread.operation.add_region_to_spore import AddRegionToSpore
+from spread.operation.collect_finding import CollectFinding
+from spread.operation.isolate_claims import IsolateClaims
+from spread.operation.spore import Spore
 from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count
 
 
@@ -14,7 +14,8 @@ async def test_no_work_to_do():
     # halt all spread containers before running this test
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        assert await isolate_claims(graph, "test") is False
+        isolate_claims_operation = IsolateClaims(graph, "test")
+        assert await isolate_claims_operation.operate() is False
         assert query_node_count(graph) == 0
 
 
@@ -24,9 +25,16 @@ async def test_success():
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
         create_nutrient(graph, "mycelium", "test", "mycelium in a fungal context")
-        assert await spore(graph, "test") is True
-        assert await add_region_to_spore(graph, "test") is True
-        assert await collect_finding(graph, "test") is True
+        spore_operation = Spore(graph, "test")
+        assert await spore_operation.operate() is True
+
+        add_region_to_spore_operation = AddRegionToSpore(graph, "test")
+        assert await add_region_to_spore_operation.operate() is True
+
+        collect_finding_operation = CollectFinding(graph, "test")
+        assert await collect_finding_operation.operate() is True
+
         pre_claim_count = query_node_count(graph)
-        assert await isolate_claims(graph, "test") is True
+        isolate_claims_operation = IsolateClaims(graph, "test")
+        assert await isolate_claims_operation.operate() is True
         assert query_node_count(graph) > pre_claim_count

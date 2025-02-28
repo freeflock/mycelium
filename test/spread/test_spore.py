@@ -2,7 +2,7 @@ import pytest
 from neo4j import GraphDatabase
 
 from communal.graph import create_nutrient, clear_graph
-from spread.operation.spore import spore
+from spread.operation.spore import Spore
 from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count
 
 
@@ -11,7 +11,8 @@ async def test_no_work_to_do():
     # halt all spread containers before running this test
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        assert await spore(graph, "test") is False
+        spore_operation = Spore(graph, "test")
+        assert await spore_operation.operate() is False
         assert query_node_count(graph) == 0
 
 
@@ -21,5 +22,6 @@ async def test_success():
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
         create_nutrient(graph, "mycelium", "test", "mycelium in a fungal context")
-        assert await spore(graph, "test") is True
+        spore_operation = Spore(graph, "test")
+        assert await spore_operation.operate() is True
         assert query_node_count(graph) == 3

@@ -18,6 +18,8 @@ services:
     build:
       context: .
       dockerfile: services/spread/Dockerfile
+    environment:
+      OPERATION_INSTANCE_COUNT: "1"
     env_file:
       - secrets/mycelium.env
     depends_on:

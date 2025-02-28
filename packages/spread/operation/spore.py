@@ -1,27 +1,42 @@
-from asyncio import sleep
+from pydantic import BaseModel
 
-from loguru import logger
+from pydantic import BaseModel
 
-from communal.graph import query_nutrient_without_seeking_spore, engage, create_spore, disengage
-from spread.operation.framework import OperationName
+from communal.graph import create_spore
+from spread.operation.framework import Operation
 
 
-async def spore(graph, engagement_handle):
-    operation_name = OperationName.spore
-    logger.info("querying nutrient without seeking spore")
-    nutrient_id = query_nutrient_without_seeking_spore(graph, operation_name)
-    if nutrient_id is None:
-        logger.info("no nutrient without seeking spore")
-        await sleep(1)
-        return False
-    else:
-        logger.info("found nutrient without seeking spore")
-    successfully_engaged = engage(graph, nutrient_id, engagement_handle, operation_name)
-    if not successfully_engaged:
-        return False
-    try:
-        create_spore(graph, nutrient_id)
-        logger.info("created spore")
-        return True
-    finally:
-        disengage(graph, nutrient_id, operation_name)
+class EngagementData(BaseModel):
+    nutrient_id: str
+
+
+class Spore(Operation):
+    def __init__(self, graph, engagement_handle):
+        super().__init__(graph, engagement_handle, "spore")
+        self.engagement_data = None
+
+    async def query_node_to_engage(self) -> str | None:
+        self.engagement_data = query_nutrient_without_seeking_spore(self.graph, self.operation_name)
+        if self.engagement_data is not None:
+            return self.engagement_data.nutrient_id
+        else:
+            return None
+
+    async def act_on_engaged_node(self):
+        create_spore(self.graph, self.engagement_data.nutrient_id)
+
+
+def query_nutrient_without_seeking_spore(graph, operation_name):
+    response = graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
+        RETURN elementId(nutrient)
+        """,
+        operation_name=operation_name)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    engagement_data = EngagementData(nutrient_id=record[0])
+    return engagement_data

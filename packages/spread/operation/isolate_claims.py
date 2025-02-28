@@ -1,40 +1,54 @@
-from asyncio import sleep
 from typing import List
 
-from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from communal.graph import engage, disengage, query_finding_without_claims, create_claim
-from spread.operation.framework import OperationName
+from communal.graph import create_claim
+from spread.operation.framework import Operation
 
 inference_client = AsyncOpenAI()
 
 
-async def isolate_claims(graph, engagement_handle):
-    operation_name = OperationName.isolate_claims
-    logger.info("querying finding without claims")
-    region_id, finding_content, citations = query_finding_without_claims(graph, operation_name)
-    if region_id is None:
-        logger.info("no finding without claims")
-        await sleep(1)
-        return False
-    else:
-        logger.info("found finding without claims")
-    successfully_engaged = engage(graph, region_id, engagement_handle, operation_name)
-    if not successfully_engaged:
-        return False
-    try:
-        claims = await generate_claims(finding_content, citations)
-        logger.info("generated claims")
+class EngagementData(BaseModel):
+    region_id: str
+    finding_content: str
+    finding_citations: List[str]
+
+
+class IsolateClaims(Operation):
+    def __init__(self, graph, engagement_handle):
+        super().__init__(graph, engagement_handle, "isolate_claims")
+        self.engagement_data = None
+
+    async def query_node_to_engage(self) -> str | None:
+        self.engagement_data = query_finding_without_claims(self.graph, self.operation_name)
+        if self.engagement_data is not None:
+            return self.engagement_data.region_id
+        else:
+            return None
+
+    async def act_on_engaged_node(self):
+        claims = await generate_claims(self.engagement_data.finding_content, self.engagement_data.finding_citations)
         for claim in claims:
             claim_content = claim.content
             claim_citations = claim.citations
-            create_claim(graph, region_id, claim_content, claim_citations)
-            logger.info("created claim")
-        return True
-    finally:
-        disengage(graph, region_id, operation_name)
+            create_claim(self.graph, self.engagement_data.region_id, claim_content, claim_citations)
+
+
+def query_finding_without_claims(graph, operation_name):
+    response = graph.execute_query(
+        """
+        MATCH (region:Region)-[:FOUND]->(finding:Finding)
+        WHERE NOT (region)-[:CLAIMED]->(:Claim)
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
+        RETURN elementId(region), finding.content, finding.citations
+        """,
+        operation_name=operation_name)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    engagement_data = EngagementData(region_id=record[0], finding_content=record[1], finding_citations=record[2])
+    return engagement_data
 
 
 class ClaimsResult(BaseModel):

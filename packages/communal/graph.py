@@ -6,36 +6,6 @@ def clear_graph(graph):
         """)
 
 
-def engage(graph, node_id, engagement_handle, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (engagee)
-        WHERE elementId(engagee) = $node_id
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(engagee)
-        CREATE (engagement:Engagement {operation: $operation_name, 
-                engagement_handle: $engagement_handle})-[:ENGAGED]->(engagee)
-        RETURN TRUE
-        """,
-        node_id=node_id,
-        operation_name=operation_name,
-        engagement_handle=engagement_handle)
-    if len(response.records) == 0:
-        return False
-    else:
-        return True
-
-
-def disengage(graph, node_id, operation_name):
-    graph.execute_query(
-        """
-        MATCH (engagement:Engagement {operation: $operation_name})-[:ENGAGED]->(engagee)
-        WHERE elementId(engagee) = $node_id
-        DETACH DELETE engagement
-        """,
-        node_id=node_id,
-        operation_name=operation_name)
-
-
 def create_nutrient(graph, research_topic, category, context):
     graph.execute_query(
         """
@@ -58,21 +28,6 @@ def query_all_nutrients(graph):
     return {record[0]: record[1] for record in response.records}
 
 
-def query_nutrient_without_seeking_spore(graph, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (nutrient:Nutrient)
-        WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
-        RETURN elementId(nutrient)
-        """,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None
-    nutrient_id = response.records[0][0]
-    return nutrient_id
-
-
 def create_spore(graph, nutrient_id):
     graph.execute_query(
         """
@@ -82,24 +37,6 @@ def create_spore(graph, nutrient_id):
         CREATE (spore)-[:SOUGHT]->(nutrient)
         """,
         nutrient_id=nutrient_id)
-
-
-def query_spore_with_fewer_than_max_regions(graph, max_regions, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (spore:Spore)
-        OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
-        WITH spore, count(region) AS region_count
-        WHERE region_count < $max_regions
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(spore)
-        RETURN elementId(spore)
-        """,
-        max_regions=max_regions,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None
-    spore_id = response.records[0][0]
-    return spore_id
 
 
 def query_nutrient_topic_and_context_from_spore(graph, spore_id):
@@ -146,23 +83,6 @@ def create_region(graph, source_region_id, source_claim_id, inquiry):
         inquiry=inquiry)
 
 
-def query_inquiry_without_finding(graph, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
-        WHERE NOT (region)-[:FOUND]->(:Finding)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
-        RETURN elementId(region), inquiry.content
-        """,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None, None
-    record = response.records[0]
-    region_id = record[0]
-    inquiry = record[1]
-    return region_id, inquiry
-
-
 def create_finding(graph, region_id, reasoning, content, citations):
     graph.execute_query(
         """
@@ -176,24 +96,6 @@ def create_finding(graph, region_id, reasoning, content, citations):
         citations=citations)
 
 
-def query_finding_without_claims(graph, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (region:Region)-[:FOUND]->(finding:Finding)
-        WHERE NOT (region)-[:CLAIMED]->(:Claim)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
-        RETURN elementId(region), finding.content, finding.citations
-        """,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None, None, None
-    record = response.records[0]
-    region_id = record[0]
-    finding_content = record[1]
-    finding_citations = record[2]
-    return region_id, finding_content, finding_citations
-
-
 def create_claim(graph, region_id, content, citations):
     graph.execute_query(
         """
@@ -204,24 +106,6 @@ def create_claim(graph, region_id, content, citations):
         region_id=region_id,
         content=content,
         citations=citations)
-
-
-def query_claim_without_relevance_or_terminus(graph, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (claim:Claim)
-        WHERE NOT (claim)-[:TERMINATES]->(:Terminus)
-            AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
-        RETURN elementId(claim), claim.content
-        """,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None, None
-    record = response.records[0]
-    claim_id = record[0]
-    claim_content = record[1]
-    return claim_id, claim_content
 
 
 def bind_claim_to_nutrient(graph, claim_id, nutrient_id):
@@ -244,25 +128,6 @@ def create_terminus(graph, claim_id):
         CREATE (claim)-[:TERMINATES]->(terminus:Terminus)
         """,
         claim_id=claim_id)
-
-
-def query_relevant_claim_without_region(graph, operation_name):
-    response = graph.execute_query(
-        """
-        MATCH (claim:Claim)<-[:CLAIMED]-(region:Region)
-        WHERE (claim)-[:RELEVANT_TO]->(:Nutrient)
-            AND NOT (claim)-[:INFORMED]->(:Region)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
-        RETURN elementId(claim), claim.content, elementId(region)
-        """,
-        operation_name=operation_name)
-    if len(response.records) == 0:
-        return None, None, None
-    record = response.records[0]
-    claim_id = record[0]
-    claim_content = record[1]
-    region_id = record[2]
-    return claim_id, claim_content, region_id
 
 
 def query_nutrient_topic_and_context_from_claim(graph, claim_id):

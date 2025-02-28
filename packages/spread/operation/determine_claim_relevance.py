@@ -1,46 +1,56 @@
-from asyncio import sleep
-
-from loguru import logger
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from communal.graph import query_claim_without_relevance_or_terminus, engage, query_all_nutrients, \
-    bind_claim_to_nutrient, create_terminus, disengage
-from spread.operation.framework import OperationName
+from communal.graph import query_all_nutrients, bind_claim_to_nutrient, create_terminus
+from spread.operation.framework import Operation
 
 inference_client = AsyncOpenAI()
 
 
-async def determine_claim_relevance(graph, engagement_handle):
-    operation_name = OperationName.determine_claim_relevance
-    logger.info("querying claim without relevance or terminus")
-    claim_id, claim_content = query_claim_without_relevance_or_terminus(graph, operation_name)
-    if claim_id is None:
-        logger.info("no claim without relevance or terminus")
-        await sleep(1)
-        return False
-    else:
-        logger.info("found claim without relevance or terminus")
-    successfully_engaged = engage(graph, claim_id, engagement_handle, operation_name)
-    if not successfully_engaged:
-        return False
-    try:
-        nutrients = query_all_nutrients(graph)
+class EngagementData(BaseModel):
+    claim_id: str
+    claim_content: str
+
+
+class DetermineClaimRelevance(Operation):
+    def __init__(self, graph, engagement_handle):
+        super().__init__(graph, engagement_handle, "determine_claim_relevance")
+        self.engagement_data = None
+
+    async def query_node_to_engage(self) -> str | None:
+        self.engagement_data = query_claim_without_relevance_or_terminus(self.graph, self.operation_name)
+        if self.engagement_data is not None:
+            return self.engagement_data.claim_id
+        else:
+            return None
+
+    async def act_on_engaged_node(self):
+        nutrients = query_all_nutrients(self.graph)
         relevant_to_at_least_one = False
         for nutrient_id, research_topic in nutrients.items():
-            relevant = await determine_relevance(research_topic, claim_content)
+            relevant = await determine_relevance(research_topic, self.engagement_data.claim_content)
             if relevant:
-                bind_claim_to_nutrient(graph, claim_id, nutrient_id)
-                logger.info(f"bound claim to nutrient: {research_topic}")
+                bind_claim_to_nutrient(self.graph, self.engagement_data.claim_id, nutrient_id)
                 relevant_to_at_least_one = True
-            else:
-                logger.info(f"claim not relevant to nutrient: {research_topic}")
         if not relevant_to_at_least_one:
-            logger.info("claim not relevant to any nutrient")
-            create_terminus(graph, claim_id)
-        return True
-    finally:
-        disengage(graph, claim_id, operation_name)
+            create_terminus(self.graph, self.engagement_data.claim_id)
+
+
+def query_claim_without_relevance_or_terminus(graph, operation_name):
+    response = graph.execute_query(
+        """
+        MATCH (claim:Claim)
+        WHERE NOT (claim)-[:TERMINATES]->(:Terminus)
+            AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
+        RETURN elementId(claim), claim.content
+        """,
+        operation_name=operation_name)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    engagement_data = EngagementData(claim_id=record[0], claim_content=record[1])
+    return engagement_data
 
 
 class RelevenceResult(BaseModel):

@@ -1,30 +1,43 @@
-from asyncio import sleep
+from pydantic import BaseModel
 
-from loguru import logger
-
-from communal.graph import engage, disengage, query_inquiry_without_finding, create_finding
-from spread.operation.framework import OperationName
+from communal.graph import create_finding
+from spread.operation.framework import Operation
 from spread.sonar import execute_search
 
 
-async def collect_finding(graph, engagement_handle):
-    operation_name = OperationName.collect_finding
-    logger.info("querying inquiry without finding")
-    region_id, inquiry = query_inquiry_without_finding(graph, operation_name)
-    if region_id is None:
-        logger.info("no inquiry without finding")
-        await sleep(1)
-        return False
-    else:
-        logger.info("found inquiry without finding")
-    successfully_engaged = engage(graph, region_id, engagement_handle, operation_name)
-    if not successfully_engaged:
-        return False
-    try:
-        reasoning, content, citations = await execute_search(inquiry)
-        logger.info("search succeeded")
-        create_finding(graph, region_id, reasoning, content, citations)
-        logger.info("created finding")
-        return True
-    finally:
-        disengage(graph, region_id, operation_name)
+class EngagementData(BaseModel):
+    region_id: str
+    inquiry: str
+
+
+class CollectFinding(Operation):
+    def __init__(self, graph, engagement_handle):
+        super().__init__(graph, engagement_handle, "collect_finding")
+        self.engagement_data = None
+
+    async def query_node_to_engage(self) -> str | None:
+        self.engagement_data = query_inquiry_without_finding(self.graph, self.operation_name)
+        if self.engagement_data is not None:
+            return self.engagement_data.region_id
+        else:
+            return None
+
+    async def act_on_engaged_node(self):
+        reasoning, content, citations = await execute_search(self.engagement_data.inquiry)
+        create_finding(self.graph, self.engagement_data.region_id, reasoning, content, citations)
+
+
+def query_inquiry_without_finding(graph, operation_name):
+    response = graph.execute_query(
+        """
+        MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
+        WHERE NOT (region)-[:FOUND]->(:Finding)
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
+        RETURN elementId(region), inquiry.content
+        """,
+        operation_name=operation_name)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    engagement_data = EngagementData(region_id=record[0], inquiry=record[1])
+    return engagement_data

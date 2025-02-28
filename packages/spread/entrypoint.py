@@ -1,30 +1,35 @@
 import asyncio
+import os
 import traceback
 from asyncio import sleep
-from uuid import uuid4
 
 from loguru import logger
 
-from spread.operation.add_region_to_claim import add_region_to_claim
-from spread.operation.add_region_to_spore import add_region_to_spore
-from spread.operation.collect_finding import collect_finding
-from spread.operation.determine_claim_relevance import determine_claim_relevance
-from spread.operation.framework import loop_operation
-from spread.operation.isolate_claims import isolate_claims
-from spread.operation.spore import spore
+from spread.operation.add_region_to_claim import AddRegionToClaim
+from spread.operation.add_region_to_spore import AddRegionToSpore
+from spread.operation.collect_finding import CollectFinding
+from spread.operation.determine_claim_relevance import DetermineClaimRelevance
+from spread.operation.framework import OperationGroup
+from spread.operation.isolate_claims import IsolateClaims
+from spread.operation.spore import Spore
+
+OPERATION_INSTANCE_COUNT = int(os.getenv("OPERATION_INSTANCE_COUNT"))
 
 
 async def main():
-    engagement_handle = str(uuid4())
     while True:
         try:
+            operation_groups = [
+                OperationGroup(Spore, OPERATION_INSTANCE_COUNT),
+                OperationGroup(AddRegionToSpore, OPERATION_INSTANCE_COUNT),
+                OperationGroup(CollectFinding, OPERATION_INSTANCE_COUNT),
+                OperationGroup(IsolateClaims, OPERATION_INSTANCE_COUNT),
+                OperationGroup(DetermineClaimRelevance, OPERATION_INSTANCE_COUNT),
+                OperationGroup(AddRegionToClaim, OPERATION_INSTANCE_COUNT)
+            ]
             async with asyncio.TaskGroup() as task_group:
-                task_group.create_task(loop_operation(spore, engagement_handle)),
-                task_group.create_task(loop_operation(add_region_to_spore, engagement_handle)),
-                task_group.create_task(loop_operation(collect_finding, engagement_handle)),
-                task_group.create_task(loop_operation(isolate_claims, engagement_handle)),
-                task_group.create_task(loop_operation(determine_claim_relevance, engagement_handle)),
-                task_group.create_task(loop_operation(add_region_to_claim, engagement_handle))
+                for operation_group in operation_groups:
+                    task_group.create_task(operation_group.begin())
         except KeyboardInterrupt:
             raise
         except Exception as error:
