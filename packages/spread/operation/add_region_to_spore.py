@@ -7,22 +7,23 @@ from pydantic import BaseModel
 from communal.graph import (query_spore_with_fewer_than_max_regions, engage,
                             query_nutrient_topic_and_context_from_spore, \
                             disengage, create_initial_region)
+from spread.operation.framework import OperationName
 
 inference_client = AsyncOpenAI()
-OPERATION_NAME = "add_region_to_spore"
 MAX_INITIAL_REGIONS = 3
 
 
 async def add_region_to_spore(graph, engagement_handle):
+    operation_name = OperationName.add_region_to_spore
     logger.info("querying spore without region")
-    spore_id = query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS, OPERATION_NAME)
+    spore_id = query_spore_with_fewer_than_max_regions(graph, MAX_INITIAL_REGIONS, operation_name)
     if spore_id is None:
         logger.info("no spore without region")
         await sleep(1)
         return False
     else:
         logger.info("found spore without region")
-    successfully_engaged = engage(graph, spore_id, engagement_handle, OPERATION_NAME)
+    successfully_engaged = engage(graph, spore_id, engagement_handle, operation_name)
     if not successfully_engaged:
         return False
     try:
@@ -33,7 +34,7 @@ async def add_region_to_spore(graph, engagement_handle):
         logger.info("created region")
         return True
     finally:
-        disengage(graph, spore_id, OPERATION_NAME)
+        disengage(graph, spore_id, operation_name)
 
 
 class InquiryResult(BaseModel):

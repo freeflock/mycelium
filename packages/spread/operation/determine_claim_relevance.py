@@ -6,21 +6,22 @@ from pydantic import BaseModel
 
 from communal.graph import query_claim_without_relevance_or_terminus, engage, query_all_nutrients, \
     bind_claim_to_nutrient, create_terminus, disengage
+from spread.operation.framework import OperationName
 
 inference_client = AsyncOpenAI()
-OPERATION_NAME = "determine_claim_relevance"
 
 
 async def determine_claim_relevance(graph, engagement_handle):
+    operation_name = OperationName.determine_claim_relevance
     logger.info("querying claim without relevance or terminus")
-    claim_id, claim_content = query_claim_without_relevance_or_terminus(graph, OPERATION_NAME)
+    claim_id, claim_content = query_claim_without_relevance_or_terminus(graph, operation_name)
     if claim_id is None:
         logger.info("no claim without relevance or terminus")
         await sleep(1)
         return False
     else:
         logger.info("found claim without relevance or terminus")
-    successfully_engaged = engage(graph, claim_id, engagement_handle, OPERATION_NAME)
+    successfully_engaged = engage(graph, claim_id, engagement_handle, operation_name)
     if not successfully_engaged:
         return False
     try:
@@ -39,7 +40,7 @@ async def determine_claim_relevance(graph, engagement_handle):
             create_terminus(graph, claim_id)
         return True
     finally:
-        disengage(graph, claim_id, OPERATION_NAME)
+        disengage(graph, claim_id, operation_name)
 
 
 class RelevenceResult(BaseModel):

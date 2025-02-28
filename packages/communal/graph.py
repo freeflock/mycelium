@@ -54,6 +54,7 @@ def query_all_nutrients(graph):
         MATCH (nutrient:Nutrient)
         RETURN elementId(nutrient), nutrient.topic
         """)
+    # {nutrient_id: nutrient_topic}
     return {record[0]: record[1] for record in response.records}
 
 
@@ -68,7 +69,8 @@ def query_nutrient_without_seeking_spore(graph, operation_name):
         operation_name=operation_name)
     if len(response.records) == 0:
         return None
-    return response.records[0][0]
+    nutrient_id = response.records[0][0]
+    return nutrient_id
 
 
 def create_spore(graph, nutrient_id):
@@ -96,7 +98,8 @@ def query_spore_with_fewer_than_max_regions(graph, max_regions, operation_name):
         operation_name=operation_name)
     if len(response.records) == 0:
         return None
-    return response.records[0][0]
+    spore_id = response.records[0][0]
+    return spore_id
 
 
 def query_nutrient_topic_and_context_from_spore(graph, spore_id):
@@ -108,7 +111,9 @@ def query_nutrient_topic_and_context_from_spore(graph, spore_id):
         """,
         spore_id=spore_id)
     record = response.records[0]
-    return record[0], record[1]
+    nutrient_topic = record[0]
+    context = record[1]
+    return nutrient_topic, context
 
 
 def create_initial_region(graph, spore_id, inquiry):
@@ -153,7 +158,9 @@ def query_inquiry_without_finding(graph, operation_name):
     if len(response.records) == 0:
         return None, None
     record = response.records[0]
-    return record[0], record[1]
+    region_id = record[0]
+    inquiry = record[1]
+    return region_id, inquiry
 
 
 def create_finding(graph, region_id, reasoning, content, citations):
@@ -181,7 +188,10 @@ def query_finding_without_claims(graph, operation_name):
     if len(response.records) == 0:
         return None, None, None
     record = response.records[0]
-    return record[0], record[1], record[2]
+    region_id = record[0]
+    finding_content = record[1]
+    finding_citations = record[2]
+    return region_id, finding_content, finding_citations
 
 
 def create_claim(graph, region_id, content, citations):
@@ -209,7 +219,9 @@ def query_claim_without_relevance_or_terminus(graph, operation_name):
     if len(response.records) == 0:
         return None, None
     record = response.records[0]
-    return record[0], record[1]
+    claim_id = record[0]
+    claim_content = record[1]
+    return claim_id, claim_content
 
 
 def bind_claim_to_nutrient(graph, claim_id, nutrient_id):
@@ -247,7 +259,10 @@ def query_relevant_claim_without_region(graph, operation_name):
     if len(response.records) == 0:
         return None, None, None
     record = response.records[0]
-    return record[0], record[1], record[2]
+    claim_id = record[0]
+    claim_content = record[1]
+    region_id = record[2]
+    return claim_id, claim_content, region_id
 
 
 def query_nutrient_topic_and_context_from_claim(graph, claim_id):
@@ -259,4 +274,6 @@ def query_nutrient_topic_and_context_from_claim(graph, claim_id):
         """,
         claim_id=claim_id)
     record = response.records[0]
-    return record[0], record[1]
+    nutrient_topic = record[0]
+    context = record[1]
+    return nutrient_topic, context

@@ -6,22 +6,22 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from communal.graph import engage, disengage, query_finding_without_claims, create_claim
-
-OPERATION_NAME = "isolate_claims"
+from spread.operation.framework import OperationName
 
 inference_client = AsyncOpenAI()
 
 
 async def isolate_claims(graph, engagement_handle):
+    operation_name = OperationName.isolate_claims
     logger.info("querying finding without claims")
-    region_id, finding_content, citations = query_finding_without_claims(graph, OPERATION_NAME)
+    region_id, finding_content, citations = query_finding_without_claims(graph, operation_name)
     if region_id is None:
         logger.info("no finding without claims")
         await sleep(1)
         return False
     else:
         logger.info("found finding without claims")
-    successfully_engaged = engage(graph, region_id, engagement_handle, OPERATION_NAME)
+    successfully_engaged = engage(graph, region_id, engagement_handle, operation_name)
     if not successfully_engaged:
         return False
     try:
@@ -34,7 +34,7 @@ async def isolate_claims(graph, engagement_handle):
             logger.info("created claim")
         return True
     finally:
-        disengage(graph, region_id, OPERATION_NAME)
+        disengage(graph, region_id, operation_name)
 
 
 class ClaimsResult(BaseModel):
