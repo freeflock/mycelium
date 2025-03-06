@@ -23,6 +23,7 @@ class Operation(ABC):
         self.engagement_handle = engagement_handle
         self.operation_name = operation_name
         self.logging_identifier = f"{self.operation_name}[{self.engagement_handle}]"
+        # TODO: Add `self.engagement_data = None` here. Used in all sub-classes.
 
     async def loop(self):
         while True:
