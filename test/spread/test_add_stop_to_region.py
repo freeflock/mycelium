@@ -2,6 +2,7 @@ import pytest
 from neo4j import GraphDatabase
 
 from communal.graph import clear_graph
+from spread.operation.add_stop_to_region import AddStopToRegion
 from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count
 
 @pytest.mark.asyncio
