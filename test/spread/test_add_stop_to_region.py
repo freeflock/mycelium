@@ -44,3 +44,5 @@ async def test_query_node_to_engage():
 
         add_stop_to_region_operation = AddStopToRegion(graph, engagement_handle="test")
         assert await add_stop_to_region_operation.query_node_to_engage() is not None
+
+# TODO: Add test for `query_node_to_engage` where all regions have stop nodes.
