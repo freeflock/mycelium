@@ -30,8 +30,11 @@ class CollectFinding(Operation):
 def query_inquiry_without_finding(graph, operation_name):
     response = graph.execute_query(
         """
+        MATCH (nutrient:Nutrient)
         MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
-        WHERE NOT (region)-[:FOUND]->(:Finding)
+        WHERE elementId(nutrient) = inquiry.nutrient_id
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND NOT (region)-[:FOUND]->(:Finding)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), inquiry.content
         """,

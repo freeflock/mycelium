@@ -73,7 +73,7 @@ def create_region(graph, source_region_id, source_claim_id, inquiry):
         WHERE elementId(source_region) = $source_region_id
         MATCH (source_claim:Claim)
         WHERE elementId(source_claim) = $source_claim_id
-        CREATE (region:Region)
+        CREATE (region:Region {nutrient_id: source_region.nutrient_id})
         CREATE (source_region)-[:SPREAD]->(region)
         CREATE (source_claim)-[:INFORMED]->(region)
         CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {content: $inquiry})

@@ -32,6 +32,7 @@ def query_nutrient_without_seeking_spore(graph, operation_name):
         MATCH (nutrient:Nutrient)
         WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
         RETURN elementId(nutrient)
         """,
         operation_name=operation_name)

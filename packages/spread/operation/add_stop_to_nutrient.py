@@ -49,6 +49,6 @@ def create_stop(graph, nutrient_id):
         """
         MATCH (nutrient:Nutrient)
         WHERE elementId(nutrient) = $nutrient_id
-        CREATE (stop:STOP {nutrient_id: elementId(nutrient)})<-[:STOPPED_BY]-(nutrient)
+        CREATE (stop:Stop {nutrient_id: elementId(nutrient)})<-[:STOPPED_BY]-(nutrient)
         """,
         nutrient_id=nutrient_id)

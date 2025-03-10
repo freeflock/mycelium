@@ -34,7 +34,9 @@ class AddRegionToSpore(Operation):
 def query_spore_with_fewer_than_max_regions(graph, operation_name, max_regions):
     response = graph.execute_query(
         """
-        MATCH (spore:Spore)
+        MATCH (spore:Spore), (nutrient: Nutrient)
+        WHERE elementId(nutrient) = spore.nutrient_id
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
         OPTIONAL MATCH (spore)-[:SPREAD]-(region:Region)
         WITH spore, count(region) AS region_count
         WHERE region_count < $max_regions

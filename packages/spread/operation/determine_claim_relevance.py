@@ -39,8 +39,9 @@ class DetermineClaimRelevance(Operation):
 def query_claim_without_relevance_or_terminus(graph, operation_name):
     response = graph.execute_query(
         """
-        MATCH (claim:Claim)
-        WHERE NOT (claim)-[:TERMINATES]->(:Terminus)
+        MATCH (claim:Claim), (nutrient:Nutrient)
+        WHERE NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND NOT (claim)-[:TERMINATES]->(:Terminus)
             AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content

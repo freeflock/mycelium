@@ -35,8 +35,10 @@ class AddRegionToClaim(Operation):
 def query_relevant_claim_without_region(graph, operation_name):
     response = graph.execute_query(
         """
+        MATCH (nutrient: Nutrient)
         MATCH (claim:Claim)<-[:CLAIMED]-(region:Region)
-        WHERE (claim)-[:RELEVANT_TO]->(:Nutrient)
+        WHERE NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (claim)-[:INFORMED]->(:Region)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content, elementId(region)
