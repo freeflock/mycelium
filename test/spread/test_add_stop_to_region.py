@@ -4,7 +4,7 @@ from neo4j import GraphDatabase
 from communal.graph import clear_graph, create_nutrient
 from spread.operation.add_region_to_claim import AddRegionToClaim
 from spread.operation.add_region_to_spore import AddRegionToSpore
-from spread.operation.add_stop_to_region import AddStopToRegion
+from spread.operation.add_stop_to_nutrient import AddStopToNutrient
 from spread.operation.collect_finding import CollectFinding
 from spread.operation.determine_claim_relevance import DetermineClaimRelevance
 from spread.operation.isolate_claims import IsolateClaims
@@ -16,8 +16,8 @@ async def test_no_work_to_do():
     # halt all spread containers before running this test
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        add_stop_to_region_operation = AddStopToRegion(graph, engagement_handle="test")
-        assert await add_stop_to_region_operation.operate() is False
+        add_stop_to_nutrient_operation = AddStopToNutrient(graph, engagement_handle="test")
+        assert await add_stop_to_nutrient_operation.operate() is False
         assert query_node_count(graph) == 0
 
 
@@ -43,10 +43,10 @@ async def test_query_node_to_engage(max_relevant_claims=3):
         for _ in range(max_relevant_claims):
             assert await determine_claim_relevance_operation.operate() is True
 
-        add_stop_to_region_operation = AddStopToRegion(graph,
-                                                       engagement_handle="test",
-                                                       max_relevant_claims=max_relevant_claims)
-        assert await add_stop_to_region_operation.query_node_to_engage() is not None
+        add_stop_to_nutrient_operation = AddStopToNutrient(graph,
+                                                         engagement_handle="test",
+                                                         max_relevant_claims=max_relevant_claims)
+        assert await add_stop_to_nutrient_operation.query_node_to_engage() is not None
 
 # TODO: Add test for `query_node_to_engage` where all regions have stop nodes.
 
@@ -75,10 +75,10 @@ async def test_operation_max_relevant_claims(max_relevant_claims=3):
             assert await determine_claim_relevance_operation.operate() is True
 
         pre_add_region_node_count = query_node_count(graph)
-        add_stop_to_region_operation = AddStopToRegion(graph,
-                                                       engagement_handle="test",
-                                                       max_relevant_claims=max_relevant_claims)
-        assert await add_stop_to_region_operation.operate() is True
+        add_stop_to_nutrient_operation = AddStopToNutrient(graph,
+                                                         engagement_handle="test",
+                                                         max_relevant_claims=max_relevant_claims)
+        assert await add_stop_to_nutrient_operation.operate() is True
         assert query_node_count(graph) == pre_add_region_node_count + 1
 
 

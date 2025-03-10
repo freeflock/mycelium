@@ -6,16 +6,16 @@ from spread.operation.framework import Operation
 class EngagementData(BaseModel):
     region_id: str
 
-class AddStopToRegion(Operation):
+class AddStopToNutrient(Operation):
     # TODO: Add class description.
     def __init__(self, graph, engagement_handle, max_relevant_claims: int = 3):
-        super().__init__(graph, engagement_handle, operation_name="add_stop_to_region")
+        super().__init__(graph, engagement_handle, operation_name="add_stop_to_nutrient")
         self.engagement_data = None
         self.max_relevant_claims = max_relevant_claims
 
     async def query_node_to_engage(self) -> str | None:
         # TODO: Add method description.
-        self.engagement_data = query_region_without_stop_node(self.graph, self.operation_name, self.max_relevant_claims)
+        self.engagement_data = query_nutrient_without_stop_node(self.graph, self.operation_name, self.max_relevant_claims)
         if self.engagement_data is not None:
             return self.engagement_data.region_id
         else:
@@ -26,7 +26,7 @@ class AddStopToRegion(Operation):
         create_stop(self.graph, self.engagement_data.region_id)
 
 
-def query_region_without_stop_node(graph: GraphDatabase.driver, operation_name: str, max_relevant_claims: int):
+def query_nutrient_without_stop_node(graph: GraphDatabase.driver, operation_name: str, max_relevant_claims: int):
     # TODO: Change to look for non-stopped nutrient and max claims not reached.
     response = graph.execute_query(
         """
