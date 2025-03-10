@@ -22,8 +22,8 @@ class AddStopToRegion(Operation):
             return None
 
     async def act_on_engaged_node(self):
-        # Maybe query nutrient first.
-        create_stop(self.graph, self.engagement_data.region_id, self.max_relevant_claims)
+        # TODO: Add method description.
+        create_stop(self.graph, self.engagement_data.region_id)
 
 
 def query_region_without_stop_node(graph: GraphDatabase.driver, operation_name: str, max_relevant_claims: int):
@@ -44,17 +44,12 @@ def query_region_without_stop_node(graph: GraphDatabase.driver, operation_name: 
     engagement_data = EngagementData(region_id=record[0])
     return engagement_data
 
-def create_stop(graph, region_id, max_relevant_claims):
-    # graph.execute_query(
-    #     """
-    #     match (region:Region)<-[:SPREAD]-(spore:Spore)-[:SOUGHT]->(nutrient:Nutrient)
-    #     match (claim:Claim)-[:RELEVANT_TO]->(nurtient)
-    #     with region, spore, nutrient, claim, count(claim) as relevant_claim_count
-    #     where relevant_claim_count >= 1
-    #     return region, spore, nutrient, claim, relevant_claim_count
-    #     """,
-    #     source_region_id=source_region_id,
-    #     source_claim_id=source_claim_id,
-    #     inquiry=inquiry)
-
-    return None
+def create_stop(graph, nutrient_id):
+    graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = $nutrient_id
+        CREATE (stop:STOP)
+        CREATE (stop)<-[:STOPPED_BY]-(nutrient)
+        """,
+        nutrient_id=nutrient_id)
