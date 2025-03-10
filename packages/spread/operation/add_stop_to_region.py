@@ -8,34 +8,53 @@ class EngagementData(BaseModel):
 
 class AddStopToRegion(Operation):
     # TODO: Add class description.
-    def __init__(self, graph, engagement_handle):
+    def __init__(self, graph, engagement_handle, max_relevant_claims: int = 3):
         super().__init__(graph, engagement_handle, operation_name="add_stop_to_region")
         self.engagement_data = None
-        self.max_relevant_claims = 3
+        self.max_relevant_claims = max_relevant_claims
 
     async def query_node_to_engage(self) -> str | None:
         # TODO: Add method description.
-        self.engagement_data = query_region_without_stop_node(self.graph, self.operation_name)
+        self.engagement_data = query_region_without_stop_node(self.graph, self.operation_name, self.max_relevant_claims)
         if self.engagement_data is not None:
             return self.engagement_data.region_id
         else:
             return None
 
     async def act_on_engaged_node(self):
-        return None
+        # Maybe query nutrient first.
+        create_stop(self.graph, self.engagement_data.region_id, self.max_relevant_claims)
 
 
-def query_region_without_stop_node(graph: GraphDatabase.driver, operation_name: str):
+def query_region_without_stop_node(graph: GraphDatabase.driver, operation_name: str, max_relevant_claims: int):
+    # TODO: Change to look for non-stopped nutrient and max claims not reached.
     response = graph.execute_query(
         """
-        MATCH (region:Region)
-        WHERE NOT (region)-[:STOPPED_BY]->(:Stop)
-            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
-        RETURN elementId(region)
+        MATCH (nutrient:Nutrient)
+        WHERE NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND count{(claim:Claim)-[:RELEVANT_TO]->(nutrient)} >= $max_relevant_claims
+            AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
+        RETURN elementId(nutrient)
         """,
-        operation_name=operation_name)
+        operation_name=operation_name,
+        max_relevant_claims=max_relevant_claims)
     if len(response.records) == 0:
         return None
     record = response.records[0]
     engagement_data = EngagementData(region_id=record[0])
     return engagement_data
+
+def create_stop(graph, region_id, max_relevant_claims):
+    # graph.execute_query(
+    #     """
+    #     match (region:Region)<-[:SPREAD]-(spore:Spore)-[:SOUGHT]->(nutrient:Nutrient)
+    #     match (claim:Claim)-[:RELEVANT_TO]->(nurtient)
+    #     with region, spore, nutrient, claim, count(claim) as relevant_claim_count
+    #     where relevant_claim_count >= 1
+    #     return region, spore, nutrient, claim, relevant_claim_count
+    #     """,
+    #     source_region_id=source_region_id,
+    #     source_claim_id=source_claim_id,
+    #     inquiry=inquiry)
+
+    return None
