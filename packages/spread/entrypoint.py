@@ -7,6 +7,7 @@ from loguru import logger
 
 from spread.operation.add_region_to_claim import AddRegionToClaim
 from spread.operation.add_region_to_spore import AddRegionToSpore
+from spread.operation.add_stop_to_nutrient import AddStopToNutrient
 from spread.operation.collect_finding import CollectFinding
 from spread.operation.determine_claim_relevance import DetermineClaimRelevance
 from spread.operation.framework import OperationGroup
@@ -21,11 +22,12 @@ async def main():
         try:
             operation_groups = [
                 OperationGroup(Spore, OPERATION_INSTANCE_COUNT),
+                OperationGroup(AddStopToNutrient, OPERATION_INSTANCE_COUNT),
                 OperationGroup(AddRegionToSpore, OPERATION_INSTANCE_COUNT),
                 OperationGroup(CollectFinding, OPERATION_INSTANCE_COUNT),
                 OperationGroup(IsolateClaims, OPERATION_INSTANCE_COUNT),
                 OperationGroup(DetermineClaimRelevance, OPERATION_INSTANCE_COUNT),
-                OperationGroup(AddRegionToClaim, OPERATION_INSTANCE_COUNT)
+                OperationGroup(AddRegionToClaim, OPERATION_INSTANCE_COUNT),
             ]
             async with asyncio.TaskGroup() as task_group:
                 for operation_group in operation_groups:
