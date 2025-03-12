@@ -13,7 +13,6 @@ class EngagementData(BaseModel):
 class CollectFinding(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "collect_finding")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_inquiry_without_finding(self.graph, self.operation_name)

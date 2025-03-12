@@ -14,7 +14,6 @@ class EngagementData(BaseModel):
 class AddRegionToSpore(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "add_region_to_spore")
-        self.engagement_data = None
         self.max_initial_regions = 3
 
     async def query_node_to_engage(self) -> str | None:

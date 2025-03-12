@@ -18,7 +18,6 @@ class EngagementData(BaseModel):
 class IsolateClaims(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "isolate_claims")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_finding_without_claims(self.graph, self.operation_name)

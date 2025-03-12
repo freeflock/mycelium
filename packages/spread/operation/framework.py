@@ -20,10 +20,10 @@ class Operation(ABC):
 
     def __init__(self, graph: GraphDatabase.driver, engagement_handle: str, operation_name: str):
         self.graph = graph
+        self.engagement_data = None
         self.engagement_handle = engagement_handle
         self.operation_name = operation_name
         self.logging_identifier = f"{self.operation_name}[{self.engagement_handle}]"
-        # TODO: Add `self.engagement_data = None` here. Used in all sub-classes.
 
     async def loop(self):
         while True:

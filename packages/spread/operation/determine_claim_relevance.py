@@ -15,7 +15,6 @@ class EngagementData(BaseModel):
 class DetermineClaimRelevance(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "determine_claim_relevance")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_claim_without_relevance_or_terminus(self.graph, self.operation_name)
@@ -40,7 +39,8 @@ def query_claim_without_relevance_or_terminus(graph, operation_name):
     response = graph.execute_query(
         """
         MATCH (claim:Claim), (nutrient:Nutrient)
-        WHERE NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+        WHERE elementId(nutrient) = claim.nutrient_id
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
             AND NOT (claim)-[:TERMINATES]->(:Terminus)
             AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)

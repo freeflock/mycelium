@@ -16,7 +16,6 @@ class EngagementData(BaseModel):
 class AddRegionToClaim(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "add_region_to_claim")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_relevant_claim_without_region(self.graph, self.operation_name)

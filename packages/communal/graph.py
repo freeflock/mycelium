@@ -76,7 +76,7 @@ def create_region(graph, source_region_id, source_claim_id, inquiry):
         CREATE (region:Region {nutrient_id: source_region.nutrient_id})
         CREATE (source_region)-[:SPREAD]->(region)
         CREATE (source_claim)-[:INFORMED]->(region)
-        CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {content: $inquiry})
+        CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {nutrient_id: source_region.nutrient_id, content: $inquiry})
         """,
         source_region_id=source_region_id,
         source_claim_id=source_claim_id,
