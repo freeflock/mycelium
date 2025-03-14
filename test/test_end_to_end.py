@@ -26,6 +26,9 @@ def test_provide_nutrient():
     }
     response = requests.post(f"{BASE_URL}/provide_nutrient", headers=headers, json=payload)
     assert response.status_code == 200
+    nutrient_id = response.json().get("nutrient_id")
+    print("\n")
+    print(nutrient_id)
 
 
 def test_visualize():

@@ -28,25 +28,34 @@ class NutrientRequest(BaseModel):
 
 
 async def create_nutrient(graph, research_topic, category, context):
-    await graph.execute_query(
+    response = await graph.execute_query(
         """
         CREATE (nutrient:Nutrient {topic: $research_topic, category: $category})
         CREATE (context:Context {content: $context})
         CREATE (nutrient)-[:DESCRIBED_BY]->(context)
+        RETURN elementId(nutrient) as nutrient_id
         """,
         research_topic=research_topic,
         category=category,
         context=context)
+    if len(response.records) == 0:
+        return None
+    record = response.records[0]
+    nutrient_id = record["nutrient_id"]
+    return nutrient_id
 
 
 @app.post("/provide_nutrient")
 async def provide_nutrient(nutrient_request: NutrientRequest):
     logger.info(f"providing nutrient: {nutrient_request}")
     async with AsyncGraphDatabase.driver(NEO4J_URI, auth=NEO4J_AUTH) as graph:
-        await create_nutrient(graph,
-                              nutrient_request.research_topic,
-                              nutrient_request.category,
-                              nutrient_request.context)
+        nutrient_id = await create_nutrient(graph,
+                                            nutrient_request.research_topic,
+                                            nutrient_request.category,
+                                            nutrient_request.context)
+        if nutrient_id is None:
+            return JSONResponse(status_code=500, content={"message": "Failed to create nutrient"})
+        return JSONResponse(status_code=200, content={"nutrient_id": nutrient_id})
 
 
 async def query_all_relationships(graph):
