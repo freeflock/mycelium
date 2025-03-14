@@ -28,24 +28,6 @@ def test_provide_nutrient():
     assert response.status_code == 200
 
 
-def test_clear():
-    headers = {"x-api-key": MYCELIUM_API_KEY}
-    response = requests.post(f"{BASE_URL}/clear", headers=headers)
-    assert response.status_code == 200
-
-
-def test_fruit():
-    headers = {"x-api-key": MYCELIUM_API_KEY}
-    payload = {
-        "category": "research",
-    }
-    response = requests.post(f"{BASE_URL}/fruit", json=payload, headers=headers)
-    assert response.status_code == 200
-    collation = response.json().get("collation")
-    print("\n\n--- result ---\n")
-    print(collation.get("content"))
-
-
 def test_visualize():
     headers = {"x-api-key": MYCELIUM_API_KEY}
     response = requests.post(f"{BASE_URL}/visualize", headers=headers)

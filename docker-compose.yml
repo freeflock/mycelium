@@ -19,7 +19,8 @@ services:
       context: .
       dockerfile: services/spread/Dockerfile
     environment:
-      OPERATION_INSTANCE_COUNT: "1"
+      OPERATION_INSTANCE_COUNT: "3"
+      STOP_NODE_THRESHOLD: "10"
     env_file:
       - secrets/mycelium.env
     depends_on:

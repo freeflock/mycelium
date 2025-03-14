@@ -11,23 +11,26 @@ from spread.operation.add_stop_to_nutrient import AddStopToNutrient
 from spread.operation.collect_finding import CollectFinding
 from spread.operation.determine_claim_relevance import DetermineClaimRelevance
 from spread.operation.framework import OperationGroup
+from spread.operation.fruit import Fruit
 from spread.operation.isolate_claims import IsolateClaims
 from spread.operation.spore import Spore
 
 OPERATION_INSTANCE_COUNT = int(os.getenv("OPERATION_INSTANCE_COUNT"))
+STOP_NODE_THRESHOLD = int(os.getenv("STOP_NODE_THRESHOLD"))
 
 
 async def main():
     while True:
         try:
             operation_groups = [
-                OperationGroup(Spore, OPERATION_INSTANCE_COUNT),
-                OperationGroup(AddStopToNutrient, OPERATION_INSTANCE_COUNT),
-                OperationGroup(AddRegionToSpore, OPERATION_INSTANCE_COUNT),
-                OperationGroup(CollectFinding, OPERATION_INSTANCE_COUNT),
-                OperationGroup(IsolateClaims, OPERATION_INSTANCE_COUNT),
-                OperationGroup(DetermineClaimRelevance, OPERATION_INSTANCE_COUNT),
-                OperationGroup(AddRegionToClaim, OPERATION_INSTANCE_COUNT),
+                OperationGroup(OPERATION_INSTANCE_COUNT, Spore),
+                OperationGroup(OPERATION_INSTANCE_COUNT, AddStopToNutrient, max_relevant_claims=STOP_NODE_THRESHOLD),
+                OperationGroup(OPERATION_INSTANCE_COUNT, AddRegionToSpore),
+                OperationGroup(OPERATION_INSTANCE_COUNT, CollectFinding),
+                OperationGroup(OPERATION_INSTANCE_COUNT, IsolateClaims),
+                OperationGroup(OPERATION_INSTANCE_COUNT, DetermineClaimRelevance),
+                OperationGroup(OPERATION_INSTANCE_COUNT, AddRegionToClaim),
+                OperationGroup(OPERATION_INSTANCE_COUNT, Fruit),
             ]
             async with asyncio.TaskGroup() as task_group:
                 for operation_group in operation_groups:

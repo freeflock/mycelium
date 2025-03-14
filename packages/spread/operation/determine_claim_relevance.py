@@ -1,7 +1,7 @@
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from communal.graph import query_all_nutrients, bind_claim_to_nutrient, create_terminus
+from communal.graph import query_originating_nutrient_for_claim, bind_claim_to_nutrient, create_terminus
 from spread.operation.framework import Operation
 
 inference_client = AsyncOpenAI()
@@ -24,14 +24,11 @@ class DetermineClaimRelevance(Operation):
             return None
 
     async def act_on_engaged_node(self):
-        nutrients = query_all_nutrients(self.graph)
-        relevant_to_at_least_one = False
-        for nutrient_id, research_topic in nutrients.items():
-            relevant = await determine_relevance(research_topic, self.engagement_data.claim_content)
-            if relevant:
-                bind_claim_to_nutrient(self.graph, self.engagement_data.claim_id, nutrient_id)
-                relevant_to_at_least_one = True
-        if not relevant_to_at_least_one:
+        nutrient_id, research_topic = query_originating_nutrient_for_claim(self.graph, self.engagement_data.claim_id)
+        relevant = await determine_relevance(research_topic, self.engagement_data.claim_content)
+        if relevant:
+            bind_claim_to_nutrient(self.graph, self.engagement_data.claim_id, nutrient_id)
+        else:
             create_terminus(self.graph, self.engagement_data.claim_id)
 
 

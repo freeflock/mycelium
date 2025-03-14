@@ -125,16 +125,18 @@ def clear_all_engagements_of_operation_type(graph, operation_name):
 class OperationGroup:
     """Coordinates multiple instances of an operation"""
 
-    def __init__(self, operation_subclass: Type, instance_count: int):
+    def __init__(self, instance_count: int, operation_subclass: Type, *args, **kwargs):
         self.operation_subclass = operation_subclass
         self.instance_count = instance_count
+        self.args = args
+        self.kwargs = kwargs
 
     async def begin(self):
         with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
             operations = []
             for i in range(self.instance_count):
                 engagement_handle = str(i)
-                operation = self.operation_subclass(graph, engagement_handle)
+                operation = self.operation_subclass(graph, engagement_handle, *self.args, **self.kwargs)
                 operations.append(operation)
             clear_all_engagements_of_operation_type(graph, operations[0].operation_name)
             async with TaskGroup() as group:

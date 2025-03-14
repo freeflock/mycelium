@@ -1,11 +1,3 @@
-def clear_graph(graph):
-    graph.execute_query(
-        """
-        MATCH (n)
-        DETACH DELETE n
-        """)
-
-
 def create_nutrient(graph, research_topic, category, context):
     graph.execute_query(
         """
@@ -18,14 +10,20 @@ def create_nutrient(graph, research_topic, category, context):
         context=context)
 
 
-def query_all_nutrients(graph):
+def query_originating_nutrient_for_claim(graph, claim_id):
     response = graph.execute_query(
         """
+        MATCH (claim:Claim)
+        WHERE elementId(claim) = $claim_id
         MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = claim.nutrient_id
         RETURN elementId(nutrient), nutrient.topic
-        """)
-    # {nutrient_id: nutrient_topic}
-    return {record[0]: record[1] for record in response.records}
+        """,
+        claim_id=claim_id)
+    record = response.records[0]
+    nutrient_id = record[0]
+    nutrient_topic = record[1]
+    return nutrient_id, nutrient_topic
 
 
 def create_spore(graph, nutrient_id):
@@ -88,7 +86,8 @@ def create_finding(graph, region_id, reasoning, content, citations):
         """
         MATCH (region:Region)
         WHERE elementId(region) = $region_id
-        CREATE (region)-[:FOUND]->(finding:Finding {nutrient_id: region.nutrient_id, reasoning: $reasoning, content: $content, citations: $citations})
+        CREATE (region)-[:FOUND]->(finding:Finding {nutrient_id: region.nutrient_id, reasoning: $reasoning,
+                content: $content, citations: $citations})
         """,
         region_id=region_id,
         reasoning=reasoning,
@@ -101,7 +100,8 @@ def create_claim(graph, region_id, content, citations):
         """
         MATCH (region:Region)
         WHERE elementId(region) = $region_id
-        CREATE (region)-[:CLAIMED]->(claim:Claim {nutrient_id: region.nutrient_id, content: $content, citations: $citations})
+        CREATE (region)-[:CLAIMED]->(claim:Claim {nutrient_id: region.nutrient_id, content: $content,
+                citations: $citations})
         """,
         region_id=region_id,
         content=content,
@@ -142,3 +142,25 @@ def query_nutrient_topic_and_context_from_claim(graph, claim_id):
     nutrient_topic = record[0]
     context = record[1]
     return nutrient_topic, context
+
+
+async def query_relevant_claims(graph, nutrient_id):
+    response = graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)<-[:RELEVANT_TO]-(claim:Claim)
+        WHERE elementId(nutrient) = $nutrient_id
+        RETURN claim.content, claim.citations
+        """,
+        nutrient_id=nutrient_id)
+    return [{"claim_content": record[0], "claim_citations": record[1]} for record in response.records]
+
+
+def create_fruit(graph, nutrient_id, collation):
+    graph.execute_query(
+        """
+        MATCH (nutrient:Nutrient)
+        WHERE elementId(nutrient) = $nutrient_id
+        CREATE (:Fruit {nutrient_id: elementId(nutrient), collation: $collation})<-[:FRUITED]-(nutrient)
+        """,
+        nutrient_id=nutrient_id,
+        collation=collation)

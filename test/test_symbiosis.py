@@ -21,32 +21,6 @@ async def test_provide_nutrient():
 
 
 @pytest.mark.asyncio
-async def test_clear():
-    with TestClient(app) as client:
-        headers = {"x-api-key": MYCELIUM_API_KEY}
-        response = client.post("/clear", headers=headers)
-        assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_fruit():
-    with TestClient(app) as client:
-        headers = {"x-api-key": MYCELIUM_API_KEY}
-        nutrient_request = NutrientRequest(
-            research_topic="How do Mycelial networks use electrical signaling?",
-            category="research",
-            context="")
-        response = client.post("/provide_nutrient", json=nutrient_request.model_dump(), headers=headers)
-        payload = {
-            "category": "research",
-        }
-        response = client.post("/fruit", json=payload, headers=headers)
-        assert response.status_code == 200
-        content = response.json()
-        print(content.get("collation"))
-
-
-@pytest.mark.asyncio
 async def test_visualize():
     with TestClient(app) as client:
         headers = {"x-api-key": MYCELIUM_API_KEY}

@@ -1,14 +1,14 @@
 import pytest
 from neo4j import GraphDatabase
 
-from communal.graph import clear_graph, create_nutrient
+from communal.graph import create_nutrient
 from spread.operation.add_region_to_claim import AddRegionToClaim
 from spread.operation.add_region_to_spore import AddRegionToSpore
 from spread.operation.collect_finding import CollectFinding
 from spread.operation.determine_claim_relevance import DetermineClaimRelevance
 from spread.operation.isolate_claims import IsolateClaims
 from spread.operation.spore import Spore
-from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count
+from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count, clear_graph
 
 
 @pytest.mark.asyncio

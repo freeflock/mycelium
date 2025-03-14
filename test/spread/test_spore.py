@@ -1,9 +1,9 @@
 import pytest
 from neo4j import GraphDatabase
 
-from communal.graph import create_nutrient, clear_graph
+from communal.graph import create_nutrient
 from spread.operation.spore import Spore
-from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count
+from test.testkit import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, query_node_count, clear_graph
 
 
 @pytest.mark.asyncio
