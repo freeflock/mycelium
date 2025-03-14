@@ -13,7 +13,6 @@ class EngagementData(BaseModel):
 class CollectFinding(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "collect_finding")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_inquiry_without_finding(self.graph, self.operation_name)
@@ -30,8 +29,11 @@ class CollectFinding(Operation):
 def query_inquiry_without_finding(graph, operation_name):
     response = graph.execute_query(
         """
+        MATCH (nutrient:Nutrient)
         MATCH (region:Region)-[:INQUIRED]->(inquiry:Inquiry)
-        WHERE NOT (region)-[:FOUND]->(:Finding)
+        WHERE elementId(nutrient) = inquiry.nutrient_id
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND NOT (region)-[:FOUND]->(:Finding)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), inquiry.content
         """,

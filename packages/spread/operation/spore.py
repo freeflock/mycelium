@@ -13,7 +13,6 @@ class EngagementData(BaseModel):
 class Spore(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "spore")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_nutrient_without_seeking_spore(self.graph, self.operation_name)
@@ -32,6 +31,7 @@ def query_nutrient_without_seeking_spore(graph, operation_name):
         MATCH (nutrient:Nutrient)
         WHERE NOT (nutrient)<-[:SOUGHT]-(:Spore)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
         RETURN elementId(nutrient)
         """,
         operation_name=operation_name)

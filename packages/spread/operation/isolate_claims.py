@@ -18,7 +18,6 @@ class EngagementData(BaseModel):
 class IsolateClaims(Operation):
     def __init__(self, graph, engagement_handle):
         super().__init__(graph, engagement_handle, "isolate_claims")
-        self.engagement_data = None
 
     async def query_node_to_engage(self) -> str | None:
         self.engagement_data = query_finding_without_claims(self.graph, self.operation_name)
@@ -38,8 +37,11 @@ class IsolateClaims(Operation):
 def query_finding_without_claims(graph, operation_name):
     response = graph.execute_query(
         """
+        MATCH (nutrient:Nutrient)
         MATCH (region:Region)-[:FOUND]->(finding:Finding)
-        WHERE NOT (region)-[:CLAIMED]->(:Claim)
+        WHERE elementId(nutrient) = finding.nutrient_id
+            AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
+            AND NOT (region)-[:CLAIMED]->(:Claim)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), finding.content, finding.citations
         """,
