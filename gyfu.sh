@@ -12,5 +12,5 @@ else
     echo "building with cache"
 fi
 
-docker buildx build $BUILD_OPTIONS -f docker/symbiosis/Dockerfile -t josiahdc/symbiosis:"${TAG}" .
-docker buildx build $BUILD_OPTIONS -f docker/spread/Dockerfile -t josiahdc/spread:"${TAG}" .
+docker buildx build $BUILD_OPTIONS -f services/symbiosis/Dockerfile -t josiahdc/symbiosis:"${TAG}" .
+docker buildx build $BUILD_OPTIONS -f services/spread/Dockerfile -t josiahdc/spread:"${TAG}" .
