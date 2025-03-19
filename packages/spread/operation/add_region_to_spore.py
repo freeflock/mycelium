@@ -1,10 +1,10 @@
-from openai import AsyncOpenAI
+from freeflock_contraptions.framework import Operation
+from freeflock_contraptions.inference import OpenaiInference
 from pydantic import BaseModel
 
 from communal.graph import query_nutrient_topic_and_context_from_spore, create_initial_region
-from spread.operation.framework import Operation
 
-inference_client = AsyncOpenAI()
+inference_client = OpenaiInference()
 
 
 class EngagementData(BaseModel):
@@ -56,28 +56,22 @@ class InquiryResult(BaseModel):
 
 
 async def generate_initial_inquiry(research_topic, context):
-    completion = await inference_client.beta.chat.completions.parse(
-        response_format=InquiryResult,
-        messages=[
-            {
-                "role": "system",
-                "content": f"""
+    system_prompt = f"""
 Given a research topic and some context related to the topic, phrase the research topic as an inquiry.
 Output only the inquiry.
 Do not add a prefix or suffix to the inquiry.
-    """,
-            },
-            {
-                "role": "user",
-                "content": f"""
-    **Research Topic**
-    {research_topic}
+"""
+    user_prompt = f"""
+**Research Topic**
+{research_topic}
 
-    **Context**
-    {context}
-    """
-            }
-        ],
-        model="o3-mini",
-    )
-    return completion.choices[0].message.parsed.inquiry
+**Context**
+{context}
+"""
+    result = await inference_client.infer_json(
+        model_name="o3-mini",
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        reasoning_effort="medium",
+        response_format=InquiryResult)
+    return result.inquiry

@@ -1,9 +1,7 @@
-from pydantic import BaseModel
-
+from freeflock_contraptions.framework import Operation
 from pydantic import BaseModel
 
 from communal.graph import create_spore
-from spread.operation.framework import Operation
 
 
 class EngagementData(BaseModel):

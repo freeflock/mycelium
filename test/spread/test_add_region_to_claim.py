@@ -26,7 +26,7 @@ async def test_success():
     # halt all spread containers before running this test
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        create_nutrient(graph, "mycelium", "test", "mycelium in a fungal context")
+        create_nutrient(graph, "mycelium", "test", "mycelium in a fungal context", "test")
         spore_operation = Spore(graph, "test")
         assert await spore_operation.operate() is True
 

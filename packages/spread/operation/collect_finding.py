@@ -1,7 +1,7 @@
+from freeflock_contraptions.framework import Operation
 from pydantic import BaseModel
 
 from communal.graph import create_finding
-from spread.operation.framework import Operation
 from spread.sonar import execute_search
 
 

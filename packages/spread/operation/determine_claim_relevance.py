@@ -1,10 +1,10 @@
-from openai import AsyncOpenAI
+from freeflock_contraptions.framework import Operation
+from freeflock_contraptions.inference import OpenaiInference
 from pydantic import BaseModel
 
 from communal.graph import query_originating_nutrient_for_claim, bind_claim_to_nutrient, create_terminus
-from spread.operation.framework import Operation
 
-inference_client = AsyncOpenAI()
+inference_client = OpenaiInference()
 
 
 class EngagementData(BaseModel):
@@ -51,35 +51,29 @@ def query_claim_without_relevance_or_terminus(graph, operation_name):
     return engagement_data
 
 
-class RelevenceResult(BaseModel):
+class RelevanceResult(BaseModel):
     claim_is_relevant: bool
 
 
 async def determine_relevance(research_topic, claim_content):
-    completion = await inference_client.beta.chat.completions.parse(
-        response_format=RelevenceResult,
-        messages=[
-            {
-                "role": "system",
-                "content": f"""
+    system_prompt = f"""
 Given a research topic, determine if the provided claim is relevant.
 The claim is relevant if the claim is directly related to the research topic,
 and contains useful information for pursuing understanding of the research topic.
 The claim is not relevant if it is unrelated to the research topic,
 or contains little useful information about the research topic.
-    """,
-            },
-            {
-                "role": "user",
-                "content": f"""
+"""
+    user_prompt = f"""
 **Research Topic**
 {research_topic}
 
 **Claim**
 {claim_content}
-    """
-            }
-        ],
-        model="o3-mini",
-    )
-    return completion.choices[0].message.parsed.claim_is_relevant
+"""
+    result = await inference_client.infer_json(
+        model_name="o3-mini",
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        reasoning_effort="medium",
+        response_format=RelevanceResult)
+    return result.claim_is_relevant

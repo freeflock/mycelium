@@ -22,7 +22,8 @@ def test_provide_nutrient():
     payload = {
         "research_topic": "Mycelium sensitivity to light",
         "category": "research",
-        "context": ""
+        "context": "",
+        "tag": "test"
     }
     response = requests.post(f"{BASE_URL}/provide_nutrient", headers=headers, json=payload)
     assert response.status_code == 200

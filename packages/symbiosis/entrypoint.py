@@ -25,19 +25,21 @@ class NutrientRequest(BaseModel):
     research_topic: str
     category: str
     context: str
+    tag: str
 
 
-async def create_nutrient(graph, research_topic, category, context):
+async def create_nutrient(graph, research_topic, category, context, tag):
     response = await graph.execute_query(
         """
-        CREATE (nutrient:Nutrient {topic: $research_topic, category: $category})
-        CREATE (context:Context {content: $context})
+        CREATE (nutrient:Nutrient {topic: $research_topic, category: $category, tag: $tag})
+        CREATE (context:Context {content: $context, tag: $tag})
         CREATE (nutrient)-[:DESCRIBED_BY]->(context)
         RETURN elementId(nutrient) as nutrient_id
         """,
         research_topic=research_topic,
         category=category,
-        context=context)
+        context=context,
+        tag=tag)
     if len(response.records) == 0:
         return None
     record = response.records[0]
@@ -52,7 +54,8 @@ async def provide_nutrient(nutrient_request: NutrientRequest):
         nutrient_id = await create_nutrient(graph,
                                             nutrient_request.research_topic,
                                             nutrient_request.category,
-                                            nutrient_request.context)
+                                            nutrient_request.context,
+                                            nutrient_request.tag)
         if nutrient_id is None:
             return JSONResponse(status_code=500, content={"message": "Failed to create nutrient"})
         return JSONResponse(status_code=200, content={"nutrient_id": nutrient_id})

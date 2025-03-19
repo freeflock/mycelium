@@ -3,6 +3,7 @@ import os
 import traceback
 from asyncio import sleep
 
+from freeflock_contraptions.framework import OperationGroup
 from loguru import logger
 
 from spread.operation.add_region_to_claim import AddRegionToClaim
@@ -10,7 +11,6 @@ from spread.operation.add_region_to_spore import AddRegionToSpore
 from spread.operation.add_stop_to_nutrient import AddStopToNutrient
 from spread.operation.collect_finding import CollectFinding
 from spread.operation.determine_claim_relevance import DetermineClaimRelevance
-from spread.operation.framework import OperationGroup
 from spread.operation.fruit import Fruit
 from spread.operation.isolate_claims import IsolateClaims
 from spread.operation.spore import Spore

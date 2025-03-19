@@ -1,10 +1,10 @@
-from openai import AsyncOpenAI
+from freeflock_contraptions.framework import Operation
+from freeflock_contraptions.inference import OpenaiInference
 from pydantic import BaseModel
 
 from communal.graph import create_region, query_nutrient_topic_and_context_from_claim
-from spread.operation.framework import Operation
 
-inference_client = AsyncOpenAI()
+inference_client = OpenaiInference()
 
 
 class EngagementData(BaseModel):
@@ -55,23 +55,14 @@ class InquiryResult(BaseModel):
 
 
 async def generate_inquiry_from_claim(research_topic, context, claim):
-    completion = await inference_client.beta.chat.completions.parse(
-        response_format=InquiryResult,
-        messages=[
-            {
-                "role": "system",
-                "content": f"""
+    system_prompt = f"""
 Given a research topic, some context related to the research topic, and a claim made about the research topic,
 come up with an inquiry that can be used to collect more information on the research topic.
 The inquiry should seek to broaden understanding of the research topic.
 The inquiry should address some missing piece of information.
 The inquiry should be related to the provided claim.
-""",
-            },
-            {
-                "role": "user",
-                "content": f"""
-
+"""
+    user_prompt = f"""
 **Research Topic**
 {research_topic}
 
@@ -81,8 +72,10 @@ The inquiry should be related to the provided claim.
 **Claim**
 {claim}
 """
-            }
-        ],
-        model="o3-mini",
-    )
-    return completion.choices[0].message.parsed.inquiry
+    result = await inference_client.infer_json(
+        model_name="o3-mini",
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        reasoning_effort="medium",
+        response_format=InquiryResult)
+    return result.inquiry

@@ -1,10 +1,10 @@
-from openai import AsyncOpenAI
+from freeflock_contraptions.framework import Operation
+from freeflock_contraptions.inference import OpenaiInference
 from pydantic import BaseModel
 
 from communal.graph import query_relevant_claims, create_fruit
-from spread.operation.framework import Operation
 
-inference_client = AsyncOpenAI()
+inference_client = OpenaiInference()
 
 
 class EngagementData(BaseModel):
@@ -51,25 +51,23 @@ class CollationResult(BaseModel):
 
 
 async def collate_claims(research_topic, claims):
-    completion = await inference_client.beta.chat.completions.parse(
-        response_format=CollationResult,
-        messages=[
-            {
-                "role": "system",
-                "content": f"""
+    system_prompt = f"""
 Collate a collection of claims on a research topic into a single cohesive whole.
 The collated output should contain all relevant information from the provided claims.
 The research topic should be the focus of the output.
 Include all citations for each claim in the collated output.
-
+"""
+    user_prompt = f"""
 **Research Topic**
 {research_topic}
 
 **Claims**
 {claims}
-""",
-            }
-        ],
-        model="o3-mini",
-    )
-    return completion.choices[0].message.parsed.collation
+"""
+    result = await inference_client.infer_json(
+        model_name="o3-mini",
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        reasoning_effort="medium",
+        response_format=CollationResult)
+    return result.collation

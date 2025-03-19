@@ -15,7 +15,8 @@ async def test_provide_nutrient():
         nutrient_request = NutrientRequest(
             research_topic="How do Mycelial networks use electrical signaling?",
             category="research",
-            context="")
+            context="",
+            tag="test")
         response = client.post("/provide_nutrient", json=nutrient_request.model_dump(), headers=headers)
         assert response.status_code == 200
 

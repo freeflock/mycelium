@@ -1,10 +1,11 @@
+from freeflock_contraptions.framework import Operation
 from neo4j import GraphDatabase
 from pydantic import BaseModel
 
-from spread.operation.framework import Operation
 
 class EngagementData(BaseModel):
     nutrient_id: str
+
 
 class AddStopToNutrient(Operation):
     def __init__(self, graph, engagement_handle, max_relevant_claims: int = 3):
@@ -12,7 +13,8 @@ class AddStopToNutrient(Operation):
         self.max_relevant_claims = max_relevant_claims
 
     async def query_node_to_engage(self) -> str | None:
-        self.engagement_data = query_nutrient_without_stop_node(self.graph, self.operation_name, self.max_relevant_claims)
+        self.engagement_data = query_nutrient_without_stop_node(self.graph, self.operation_name,
+                                                                self.max_relevant_claims)
         if self.engagement_data is not None:
             return self.engagement_data.nutrient_id
         else:
@@ -39,11 +41,12 @@ def query_nutrient_without_stop_node(graph: GraphDatabase.driver, operation_name
     engagement_data = EngagementData(nutrient_id=record[0])
     return engagement_data
 
+
 def create_stop(graph, nutrient_id):
     graph.execute_query(
         """
         MATCH (nutrient:Nutrient)
         WHERE elementId(nutrient) = $nutrient_id
-        CREATE (stop:Stop {nutrient_id: elementId(nutrient)})<-[:STOPPED_BY]-(nutrient)
+        CREATE (stop:Stop {nutrient_id: elementId(nutrient), tag: nutrient.tag})<-[:STOPPED_BY]-(nutrient)
         """,
         nutrient_id=nutrient_id)

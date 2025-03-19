@@ -26,7 +26,8 @@ async def test_query_node_to_engage(max_relevant_claims=3):
     # Halt all spread containers before running this test.
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        create_nutrient(graph, research_topic="mycelium", category="test", context="mycelium in a fungal context")
+        create_nutrient(graph, research_topic="mycelium", category="test", context="mycelium in a fungal context",
+                        tag="test")
         spore_operation = Spore(graph, engagement_handle="test")
         assert await spore_operation.operate() is True
 
@@ -58,7 +59,8 @@ async def test_operation_max_relevant_claims(max_relevant_claims=3):
     # Halt all spread containers before running this test.
     with GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD)) as graph:
         clear_graph(graph)
-        create_nutrient(graph, research_topic="mycelium", category="test", context="mycelium in a fungal context")
+        create_nutrient(graph, research_topic="mycelium", category="test", context="mycelium in a fungal context",
+                        tag="test")
         spore_operation = Spore(graph, engagement_handle="test")
         assert await spore_operation.operate() is True
 

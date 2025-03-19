@@ -1,13 +1,14 @@
-def create_nutrient(graph, research_topic, category, context):
+def create_nutrient(graph, research_topic, category, context, tag):
     graph.execute_query(
         """
-        CREATE (nutrient:Nutrient {topic: $research_topic, category: $category})
-        CREATE (context:Context {nutrient_id: elementId(nutrient), content: $context})
+        CREATE (nutrient:Nutrient {topic: $research_topic, category: $category, tag: $tag})
+        CREATE (context:Context {nutrient_id: elementId(nutrient), content: $context, tag: $tag})
         CREATE (nutrient)-[:DESCRIBED_BY]->(context)
         """,
         research_topic=research_topic,
         category=category,
-        context=context)
+        context=context,
+        tag=tag)
 
 
 def query_originating_nutrient_for_claim(graph, claim_id):
@@ -31,7 +32,7 @@ def create_spore(graph, nutrient_id):
         """
         MATCH (nutrient:Nutrient)
         WHERE elementId(nutrient) = $nutrient_id
-        CREATE (spore:Spore {nutrient_id: elementId(nutrient), inquiry: nutrient.topic})
+        CREATE (spore:Spore {nutrient_id: elementId(nutrient), inquiry: nutrient.topic, tag: nutrient.tag})
         CREATE (spore)-[:SOUGHT]->(nutrient)
         """,
         nutrient_id=nutrient_id)
@@ -56,9 +57,10 @@ def create_initial_region(graph, spore_id, inquiry):
         """
         MATCH (spore:Spore)
         WHERE elementId(spore) = $spore_id
-        CREATE (region:Region {nutrient_id: spore.nutrient_id})
+        CREATE (region:Region {nutrient_id: spore.nutrient_id, tag: spore.tag})
         CREATE (spore)-[:SPREAD]->(region)
-        CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {nutrient_id: spore.nutrient_id, content: $inquiry})
+        CREATE (region)
+                -[:INQUIRED]->(inquiry:Inquiry {nutrient_id: spore.nutrient_id, content: $inquiry, tag: spore.tag})
         """,
         spore_id=spore_id,
         inquiry=inquiry)
@@ -71,10 +73,11 @@ def create_region(graph, source_region_id, source_claim_id, inquiry):
         WHERE elementId(source_region) = $source_region_id
         MATCH (source_claim:Claim)
         WHERE elementId(source_claim) = $source_claim_id
-        CREATE (region:Region {nutrient_id: source_region.nutrient_id})
+        CREATE (region:Region {nutrient_id: source_region.nutrient_id, tag: source_region.tag})
         CREATE (source_region)-[:SPREAD]->(region)
         CREATE (source_claim)-[:INFORMED]->(region)
-        CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {nutrient_id: source_region.nutrient_id, content: $inquiry})
+        CREATE (region)-[:INQUIRED]->(inquiry:Inquiry {nutrient_id: source_region.nutrient_id, content: $inquiry, 
+                tag: source_region.tag})
         """,
         source_region_id=source_region_id,
         source_claim_id=source_claim_id,
@@ -87,7 +90,7 @@ def create_finding(graph, region_id, reasoning, content, citations):
         MATCH (region:Region)
         WHERE elementId(region) = $region_id
         CREATE (region)-[:FOUND]->(finding:Finding {nutrient_id: region.nutrient_id, reasoning: $reasoning,
-                content: $content, citations: $citations})
+                content: $content, citations: $citations, tag: region.tag})
         """,
         region_id=region_id,
         reasoning=reasoning,
@@ -101,7 +104,7 @@ def create_claim(graph, region_id, content, citations):
         MATCH (region:Region)
         WHERE elementId(region) = $region_id
         CREATE (region)-[:CLAIMED]->(claim:Claim {nutrient_id: region.nutrient_id, content: $content,
-                citations: $citations})
+                citations: $citations, tag: region.tag})
         """,
         region_id=region_id,
         content=content,
@@ -125,7 +128,7 @@ def create_terminus(graph, claim_id):
         """
         MATCH (claim:Claim)
         WHERE elementId(claim) = $claim_id
-        CREATE (claim)-[:TERMINATES]->(terminus:Terminus {nutrient_id: claim.nutrient_id})
+        CREATE (claim)-[:TERMINATES]->(terminus:Terminus {nutrient_id: claim.nutrient_id, tag: claim.tag})
         """,
         claim_id=claim_id)
 
@@ -160,7 +163,8 @@ def create_fruit(graph, nutrient_id, collation):
         """
         MATCH (nutrient:Nutrient)
         WHERE elementId(nutrient) = $nutrient_id
-        CREATE (:Fruit {nutrient_id: elementId(nutrient), collation: $collation})<-[:FRUITED]-(nutrient)
+        CREATE (:Fruit {nutrient_id: elementId(nutrient), collation: $collation, tag: nutrient.tag})
+                <-[:FRUITED]-(nutrient)
         """,
         nutrient_id=nutrient_id,
         collation=collation)

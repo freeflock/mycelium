@@ -1,12 +1,12 @@
 from typing import List
 
-from openai import AsyncOpenAI
+from freeflock_contraptions.framework import Operation
+from freeflock_contraptions.inference import OpenaiInference
 from pydantic import BaseModel
 
 from communal.graph import create_claim
-from spread.operation.framework import Operation
 
-inference_client = AsyncOpenAI()
+inference_client = OpenaiInference()
 
 
 class EngagementData(BaseModel):
@@ -62,12 +62,7 @@ class ClaimsResult(BaseModel):
 
 
 async def generate_claims(finding_content, citations):
-    completion = await inference_client.beta.chat.completions.parse(
-        response_format=ClaimsResult,
-        messages=[
-            {
-                "role": "system",
-                "content": f"""
+    system_prompt = f"""
 Given some content, and a list of citations, come up with a list of claims made in the content.
 Include all claims made in the content which include a citation.
 Do not include any claims which do not have a citation.
@@ -87,19 +82,18 @@ This is an example claim![3][2]
 
 Indicates the claim "This is an example claim!" includes citations:
 "https://www.third_example_url.com" and "https://www.second_example_url.com"
-""",
-            },
-            {
-                "role": "user",
-                "content": f"""
+"""
+    user_prompt = f"""
 **Content**
 {finding_content}
 
 **Citations**
 {citations}
-    """
-            }
-        ],
-        model="o3-mini",
-    )
-    return completion.choices[0].message.parsed.claims
+"""
+    result = await inference_client.infer_json(
+        model_name="o3-mini",
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        reasoning_effort="medium",
+        response_format=ClaimsResult)
+    return result.claims
