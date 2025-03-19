@@ -1,1 +1,1 @@
-freeflock-contraptions==0.2
+freeflock-contraptions==0.3
