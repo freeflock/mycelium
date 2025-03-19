@@ -2,6 +2,7 @@ import asyncio
 import os
 import traceback
 from asyncio import sleep
+from math import ceil
 
 from freeflock_contraptions.framework import OperationGroup
 from loguru import logger
@@ -22,15 +23,19 @@ STOP_NODE_THRESHOLD = int(os.getenv("STOP_NODE_THRESHOLD"))
 async def main():
     while True:
         try:
+            spore_operation_count = ceil(OPERATION_INSTANCE_COUNT * 0.1)
+            add_stop_operation_count = ceil(OPERATION_INSTANCE_COUNT * 0.5)
+            claim_relevance_operation_count = ceil(OPERATION_INSTANCE_COUNT * 5)
+            fruit_operation_count = ceil(OPERATION_INSTANCE_COUNT * 0.5)
             operation_groups = [
-                OperationGroup(OPERATION_INSTANCE_COUNT, Spore),
-                OperationGroup(OPERATION_INSTANCE_COUNT, AddStopToNutrient, max_relevant_claims=STOP_NODE_THRESHOLD),
+                OperationGroup(spore_operation_count, Spore),
+                OperationGroup(add_stop_operation_count, AddStopToNutrient, max_relevant_claims=STOP_NODE_THRESHOLD),
                 OperationGroup(OPERATION_INSTANCE_COUNT, AddRegionToSpore),
                 OperationGroup(OPERATION_INSTANCE_COUNT, CollectFinding),
                 OperationGroup(OPERATION_INSTANCE_COUNT, IsolateClaims),
-                OperationGroup(OPERATION_INSTANCE_COUNT, DetermineClaimRelevance),
+                OperationGroup(claim_relevance_operation_count, DetermineClaimRelevance),
                 OperationGroup(OPERATION_INSTANCE_COUNT, AddRegionToClaim),
-                OperationGroup(OPERATION_INSTANCE_COUNT, Fruit),
+                OperationGroup(fruit_operation_count, Fruit),
             ]
             async with asyncio.TaskGroup() as task_group:
                 for operation_group in operation_groups:
