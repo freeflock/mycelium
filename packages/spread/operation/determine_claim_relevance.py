@@ -42,6 +42,7 @@ def query_claim_without_relevance_or_terminus(graph, operation_name):
             AND NOT (claim)-[:RELEVANT_TO]->(:Nutrient)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:

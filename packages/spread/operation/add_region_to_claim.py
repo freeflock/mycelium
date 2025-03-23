@@ -41,6 +41,7 @@ def query_relevant_claim_without_region(graph, operation_name):
             AND NOT (claim)-[:INFORMED]->(:Region)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content, elementId(region)
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:

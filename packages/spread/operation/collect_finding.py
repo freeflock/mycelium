@@ -36,6 +36,7 @@ def query_inquiry_without_finding(graph, operation_name):
             AND NOT (region)-[:FOUND]->(:Finding)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), inquiry.content
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:

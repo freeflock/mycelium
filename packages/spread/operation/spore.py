@@ -31,6 +31,7 @@ def query_nutrient_without_seeking_spore(graph, operation_name):
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
             AND NOT (nutrient)-[:STOPPED_BY]->(:Stop)
         RETURN elementId(nutrient)
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:

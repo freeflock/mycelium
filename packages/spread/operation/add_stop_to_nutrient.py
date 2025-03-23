@@ -32,6 +32,7 @@ def query_nutrient_without_stop_node(graph: GraphDatabase.driver, operation_name
             AND count{(claim:Claim)-[:RELEVANT_TO]->(nutrient)} >= $max_relevant_claims
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
         RETURN elementId(nutrient)
+        LIMIT 10
         """,
         operation_name=operation_name,
         max_relevant_claims=max_relevant_claims)

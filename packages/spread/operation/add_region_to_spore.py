@@ -41,6 +41,7 @@ def query_spore_with_fewer_than_max_regions(graph, operation_name, max_regions):
         WHERE region_count < $max_regions
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(spore)
         RETURN elementId(spore)
+        LIMIT 10
         """,
         max_regions=max_regions,
         operation_name=operation_name)

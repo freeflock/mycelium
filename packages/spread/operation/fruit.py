@@ -37,6 +37,7 @@ def query_nutrient_with_stop_node(graph, operation_name):
             AND NOT (nutrient)-[:FRUITED]->(:Fruit)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(nutrient)
         RETURN elementId(nutrient), nutrient.topic
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:

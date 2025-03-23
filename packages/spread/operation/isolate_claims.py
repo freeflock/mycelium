@@ -44,6 +44,7 @@ def query_finding_without_claims(graph, operation_name):
             AND NOT (region)-[:CLAIMED]->(:Claim)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(region)
         RETURN elementId(region), finding.content, finding.citations
+        LIMIT 10
         """,
         operation_name=operation_name)
     if len(response.records) == 0:
