@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG=0.2
+TAG=0.3
 NO_CACHE="false"
 
 # requires a docker-container buildx driver
@@ -12,5 +12,5 @@ else
     echo "building with cache"
 fi
 
-docker buildx build $BUILD_OPTIONS -f docker/symbiosis/Dockerfile -t josiahdc/symbiosis:"${TAG}" .
-docker buildx build $BUILD_OPTIONS -f docker/spread/Dockerfile -t josiahdc/spread:"${TAG}" .
+docker buildx build $BUILD_OPTIONS -f services/symbiosis/Dockerfile -t josiahdc/symbiosis:"${TAG}" .
+docker buildx build $BUILD_OPTIONS -f services/spread/Dockerfile -t josiahdc/spread:"${TAG}" .

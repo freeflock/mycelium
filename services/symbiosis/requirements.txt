@@ -1,0 +1,5 @@
+openai==1.63.1
+neo4j==5.25.0
+fastapi[standard]==0.115.6
+gunicorn==23.0.0
+uvicorn-worker==0.3.0
