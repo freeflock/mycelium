@@ -37,7 +37,7 @@ def query_relevant_claim_without_region(graph, operation_name):
         MATCH (nutrient: Nutrient)
         MATCH (claim:Claim)<-[:CLAIMED]-(region:Region)
         WHERE NOT (nutrient)-[:STOPPED_BY]->(:Stop)
-            AND (claim)-[:RELEVANT_TO]->(:Nutrient)
+            AND (claim)-[:RELEVANT_TO]->(nutrient)
             AND NOT (claim)-[:INFORMED]->(:Region)
             AND NOT (:Engagement {operation: $operation_name})-[:ENGAGED]->(claim)
         RETURN elementId(claim), claim.content, elementId(region)
