@@ -22,7 +22,7 @@ services:
       OPERATION_INSTANCE_COUNT: "3"
       STOP_NODE_THRESHOLD: "10"
     env_file:
-      - secrets/mycelium.env
+      - ~/.pasture/config.env
     depends_on:
       - graph
   symbiosis:
@@ -33,14 +33,14 @@ services:
       context: .
       dockerfile: services/symbiosis/Dockerfile
     env_file:
-      - secrets/mycelium.env
+      - ~/.pasture/config.env
     depends_on:
       - spread
       - graph
 
 secrets:
   neo4j_auth_file:
-    file: secrets/neo4j_auth.txt
+    file: ~/.pasture/neo4j_auth.txt
 
 volumes:
   mycelium-neo4j-config:
