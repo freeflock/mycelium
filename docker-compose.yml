@@ -40,7 +40,7 @@ services:
 
 secrets:
   neo4j_auth_file:
-    file: secrets/neo4j_auth.txt
+    file: ~/.pasture/neo4j_auth.txt
 
 volumes:
   mycelium-neo4j-config:
