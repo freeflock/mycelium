@@ -3,7 +3,6 @@ import os
 
 from fastapi import FastAPI
 from neo4j import AsyncGraphDatabase
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
@@ -14,8 +13,6 @@ NEO4J_AUTH = (os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
 
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.INFO)
-
-inference_client = AsyncOpenAI()
 
 app = FastAPI()
 app.add_middleware(ApiKeyValidator)

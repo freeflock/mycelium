@@ -40,7 +40,7 @@ def query_nutrient_with_high_dead_end_ratio(graph, operation_name):
         WITH nutrient, count(region) AS dead_end_region_count
         MATCH (nutrient)<-[:SOUGHT]-(spore:Spore)
         WITH nutrient, dead_end_region_count, count(spore) AS spore_count
-        WHERE ceil(dead_end_region_count * 0.33) > spore_count
+        WHERE ceil(dead_end_region_count * 0.33) >= spore_count
         RETURN elementId(nutrient)
         LIMIT 10
         """,

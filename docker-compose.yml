@@ -14,7 +14,7 @@ services:
     secrets:
       - neo4j_auth_file
   spread:
-    image: josiahdc/spread:0.3
+    image: josiahdc/spread:3.4
     build:
       context: .
       dockerfile: services/spread/Dockerfile
@@ -22,25 +22,25 @@ services:
       OPERATION_INSTANCE_COUNT: "3"
       STOP_NODE_THRESHOLD: "10"
     env_file:
-      - secrets/mycelium.env
+      - ~/.pasture/config.env
     depends_on:
       - graph
   symbiosis:
-    image: josiahdc/symbiosis:0.3
+    image: josiahdc/symbiosis:3.4
     ports:
       - "33933:33333"
     build:
       context: .
       dockerfile: services/symbiosis/Dockerfile
     env_file:
-      - secrets/mycelium.env
+      - ~/.pasture/config.env
     depends_on:
       - spread
       - graph
 
 secrets:
   neo4j_auth_file:
-    file: secrets/neo4j_auth.txt
+    file: ~/.pasture/neo4j_auth.txt
 
 volumes:
   mycelium-neo4j-config:
