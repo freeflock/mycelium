@@ -72,7 +72,7 @@ or contains little useful information about the research topic.
 {claim_content}
 """
     result = await inference_client.infer_json(
-        model_name="o3-mini",
+        model_name="o3",
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         reasoning_effort="medium",

@@ -70,7 +70,7 @@ Do not add a prefix or suffix to the inquiry.
 {context}
 """
     result = await inference_client.infer_json(
-        model_name="o3-mini",
+        model_name="o3",
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         reasoning_effort="medium",
