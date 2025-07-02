@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG=3.4
+TAG=3.5
 NO_CACHE="false"
 
 # requires a docker-container buildx driver

@@ -1,6 +1,5 @@
-import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-test_directory_path = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(f"{test_directory_path}/../secrets/test.env")
+load_dotenv(f"{Path.home()}/.pasture/config.env")

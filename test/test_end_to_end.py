@@ -36,5 +36,5 @@ def test_visualize():
     headers = {"x-api-key": MYCELIUM_API_KEY}
     response = requests.post(f"{BASE_URL}/visualize", headers=headers)
     assert response.status_code == 200
-    collation = response.json().get("graph_data")
-    print(collation)
+    visualization = response.json().get("graph_data")
+    print(visualization)
