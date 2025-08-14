@@ -83,6 +83,8 @@ This is an example claim![3][2]
 
 Indicates the claim "This is an example claim!" includes citations:
 "https://www.third_example_url.com" and "https://www.second_example_url.com"
+
+If no claims are found in the content, return a single claim with the content "No claims found in the content."
 """
     user_prompt = f"""
 **Content**
